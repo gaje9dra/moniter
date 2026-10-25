@@ -1,34 +1,56 @@
 # Phase 0.7 — Test Strategy and CI Baseline
 
 ## Current CI workflow
-Workflow: [CI](../../.github/workflows/ci.yml). The intended workflow runs on pull requests, pushes to `main` or `feat/**`, and manual dispatch.
 
-Jobs include dashboard frozen install/lint/typecheck/Vitest/Next build; .NET format/build/xUnit/vulnerability checks; Windows agent build/tests on a Windows runner; and Gitleaks secret scanning.
+Workflow: [CI](../../.github/workflows/ci.yml). It runs for pull requests, pushes to `main` or `feat/**`, and manual dispatch.
 
-## Current blocker
+Required jobs:
+- Dashboard frozen install, lint, typecheck, Vitest, and Next.js production build.
+- .NET format, build, xUnit tests, and dependency vulnerability checks.
+- Windows agent build and tests on a Windows runner.
+- Gitleaks secret scanning.
 
-The actual feature branch contains `apps/dashboard/pnpm-lock.yaml` with the literal 7-byte content `PENDING`. A frozen install cannot succeed with this file. CI run [40160966800](https://github.com/gaje9dra/moniter/actions/runs/40160966800) failed the dashboard dependency install with `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY`; .NET API/agent, Windows agent, and secret-scan jobs passed.
+## Lockfile recovery — committed and verified
 
-The dashboard manifest declares `packageManager: pnpm@10.20.0`, Next.js `15.5.6`, React and React DOM `19.1.1`, TypeScript `5.9.3`, ESLint `9.39.1`, and Vitest `3.2.4`. A recovered artifact from prior run `40159780444` (artifact ID `12586430553`) contains a 140,815-byte lockfile. Offline YAML inspection reports one root importer, 450 package entries and 450 snapshots. Its direct importer declarations match the manifest, but it has not yet been committed correctly.
+The committed file `apps/dashboard/pnpm-lock.yaml` was recovered from artifact `12586430553` from workflow run [40159780444](https://github.com/gaje9dra/moniter/actions/runs/40159780444).
 
-The prior run `40159780444` passed only after running `pnpm install --no-frozen-lockfile` inside the CI runner and uploading the generated artifact. That is not acceptable evidence of reproducibility from the committed lockfile. CI must retain `pnpm install --frozen-lockfile` as the only dependency installation path.
+Verified details from successful recovery workflow [40162819427](https://github.com/gaje9dra/moniter/actions/runs/40162819427):
+- Target branch: `feat/phase-1-foundation`.
+- Lockfile commit: `0d988d74ceef679c54e18d30c54462499e83ca76`.
+- Byte length: `140815`.
+- SHA-256: `64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6`.
+- The recovery job verified the downloaded artifact, committed the file, then fetched the remote file and verified its byte length and SHA-256.
+- The temporary recovery workflow was removed from the recovery branch after successful verification.
 
-## Execution and transfer limitations encountered
+The recovered lockfile is now present at [apps/dashboard/pnpm-lock.yaml](../../apps/dashboard/pnpm-lock.yaml). This confirms artifact transfer and remote-file integrity only; it does not prove that pnpm accepts the lockfile or that frontend checks pass.
 
-- `git clone https://github.com/gaje9dra/moniter.git` fails because this environment cannot resolve `github.com`.
-- `corepack pnpm@10.20.0 --version` fails because this environment cannot resolve `registry.npmjs.org` (`EAI_AGAIN`).
-- The GitHub connector's blob-write attempt returned a 380-byte blob for the intended 140,815-byte lockfile, so the incomplete object was not used. The file has not been committed; do not infer successful transfer from artifact download alone.
+## Latest CI status
 
-## Acceptance checklist
+The first CI workflow associated with lockfile commit `0d988d74ceef679c54e18d30c54462499e83ca76` is [run 40162832514](https://github.com/gaje9dra/moniter/actions/runs/40162832514). GitHub reports its conclusion as `action_required` and exposes no jobs for that run, so it is not evidence of either a green or failed build. A fresh actionable CI run is required.
 
-- [ ] Commit the full generated `pnpm-lock.yaml` without truncation or placeholders.
-- [ ] From a clean checkout, use pnpm 10.20.0 and run `pnpm install --frozen-lockfile` successfully.
-- [ ] Verify the lockfile hash is unchanged after the install; repeat in a clean environment where possible.
-- [ ] Run frontend lint, typecheck, Vitest and production build against the frozen install.
-- [ ] Verify a fresh run has all dashboard, .NET, Windows and secret-scanning jobs green.
-- [ ] Record actual test counts and the exact commit/run URLs.
-- [ ] Keep Phase 0.9 incomplete until CI and repository governance evidence are verified.
+Earlier CI runs failed before frontend checks because the committed lockfile contained the literal 7-byte placeholder `PENDING`. Those runs are historical evidence and must not be used as the result for the repaired commit.
 
-## Governance
+## Required validation after recovery
 
-Branch-protection inspection returned HTTP 403 (`Resource not accessible by integration`); rules and required checks remain unverified. Manually inspect GitHub Settings → Rules/Branches. Privacy/legal review, employee notice, supported Windows builds and production retention approval are separate release gates.
+Using pnpm `10.20.0`, run from the dashboard project directory or the documented workspace root as appropriate:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Acceptance requirements:
+- Clean frozen installation succeeds without regenerating the lockfile.
+- The lockfile hash remains unchanged after installation.
+- Lint, typecheck, unit tests, and the production build all execute and pass.
+- The complete Linux and Windows CI pipeline passes on a fresh commit.
+- Record actual job outcomes, test counts, commit SHA, and workflow URL.
+
+## Remaining governance gates
+
+Branch protection and required-check enforcement have not been verified because the connected integration returned HTTP 403 for the branch-protection endpoint. Manually inspect GitHub Settings → Rules/Branches.
+
+Privacy/legal review, employee notice, supported Windows builds, production retention approval, and security review remain independent production-release gates. Phase 0 must not be signed off solely because the lockfile transfer succeeded.
