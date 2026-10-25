@@ -1,26 +1,29 @@
 # Phase 1 — Status and Sign-off
 
 **Last updated:** 2026-10-25  
-**Overall status:** IN PROGRESS — foundation implementation exists on the feature branch; real CI checks are being iterated.
+**Overall status:** FOUNDATION IMPLEMENTED; FINAL SIGN-OFF BLOCKED by committed lockfile reproducibility and review/branch-protection gates.
 
-| Subphase | Status | Evidence / blocker |
+| Subphase | Status | Evidence |
 |---|---|---|
-| 1.1 Architecture | Baseline approved and documented | PostgreSQL/EF Core/SignalR remain planned for later phases |
-| 1.2 Project structure | Initial projects created | Dashboard, API, agent and test projects exist; package/build verification pending |
-| 1.3 Environment/configuration | Setup docs and safe defaults created | Clean reproducible install not yet green |
-| 1.4 Validation/errors | Initial foundation created | Correlation ID validation, generic API error body and agent config validation; tests pending CI |
-| 1.5 Shells/health | Initial implementation created | Dashboard uses real backend liveness; API has liveness/readiness/OpenAPI dev; agent is non-collecting |
-| 1.6 Quality/testing | Not green yet | Initial CI found pnpm setup and .NET formatting/restore problems; fixes committed |
-| 1.7 CI/CD | Workflow created, validation ongoing | Linux and Windows jobs plus secret scan; actual successful run required |
-| 1.8 Developer docs | Documents created | Setup/config/testing/CI/security/limitations docs |
-| 1.9 Security baseline | Documented at foundation level | Full security audit and production controls are not in scope |
-| 1.10 Final validation | Not passed | Wait for green fresh workflow run and evidence-based Phase 0 revalidation |
+| 1.1 Architecture | Implemented/documented | Phase 0 technology decisions and architecture reconciled to Next.js/React/TypeScript and .NET 10; PostgreSQL/EF Core/SignalR are deferred |
+| 1.2 Project structure | Implemented | Dashboard, API, agent and xUnit/Vitest test project structure exists on feature branch |
+| 1.3 Environment/configuration | Initial baseline implemented | Node 24/pnpm 10.20.0, .NET 10, server-side API origin setting and agent config validation |
+| 1.4 Validation/errors | Initial baseline implemented | API correlation ID validation, safe generic internal error response, structured JSON diagnostics, agent config validation |
+| 1.5 Application shells/health | Implemented as foundation | Dashboard checks actual API liveness with 2.5-second timeout and unavailable state; API liveness/readiness; agent startup/shutdown/version diagnostics only |
+| 1.6 Code quality/tests | Commands green on latest completed run | Latest run 40159780444: frontend quality/test/build job succeeded; .NET and Windows test jobs succeeded |
+| 1.7 CI/CD | Four jobs green on latest observed run | Dashboard, .NET, Windows agent and Gitleaks secret scan all succeeded in run 40159780444 |
+| 1.8 Developer docs | Created | Setup, config, testing, CI, security baseline, limitations, foundation report |
+| 1.9 Security baseline | Initial checks passed | Gitleaks scan and per-project .NET vulnerability listing succeeded. This is not a complete security audit. |
+| 1.10 Final validation | Not passed | Full generated pnpm lockfile must be committed; rerun a strict frozen-lockfile-only build; PR review and branch-protection gate remain |
 
-## Repository references
+## Exact source-control state
 
+- Repository: https://github.com/gaje9dra/moniter
 - Branch: `feat/phase-1-foundation`
-- Pull request: https://github.com/gaje9dra/moniter/pull/1
-- Earlier failing workflow for root-cause evidence: https://github.com/gaje9dra/moniter/actions/runs/40158587979
+- Current head (last verified when this status was written): `3383108ad72c6917d0ccbc686a9c28aacff426f2`
+- Draft PR: https://github.com/gaje9dra/moniter/pull/1
+- Latest all-green Actions run: https://github.com/gaje9dra/moniter/actions/runs/40159780444
+- `main` remains unprotected according to the repository branch metadata. Settings must be changed by the repository owner or an authorized settings API.
 
 ## Mandatory CI rule
 
@@ -28,4 +31,4 @@ DO NOT STOP WORKING BEFORE ALL REQUIRED CI CHECKS ARE GREEN AND ALL IMPLEMENTATI
 
 ## Sign-off decision
 
-Do not mark Phase 1 complete while any required workflow fails or has not run. Do not start Phase 2 or implement later monitoring functions in this phase.
+Do not mark Phase 1 complete until the committed pnpm lockfile is full/reproducible, CI is green on that exact lockfile commit, reviewers have approved, and all remaining organizational/legal blockers are explicit. Phase 2 has not started.
