@@ -1,0 +1,38 @@
+name: Phase 2 EF Model Diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/phase-2-multitenant-database
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Install EF Core CLI
+        run: dotnet tool install --global dotnet-ef --version 10.0.13
+      - name: Restore
+        run: dotnet restore src/Moniter.Api/Moniter.Api.csproj
+      - name: Scaffold diagnostic model diff
+        run: dotnet ef migrations add Phase2Diagnostic --project src/Moniter.Api/Moniter.Api.csproj --output-dir Data/DiagnosticMigrations --verbose
+        env:
+          MONITER_DATABASE_URL: "Host=localhost;Port=5432;Database=moniter_diagnostic;Username=diagnostic;Password=diagnostic"
+      - name: Print diagnostic migration
+        run: |
+          find src/Moniter.Api/Data/DiagnosticMigrations -maxdepth 1 -name '*Phase2Diagnostic.cs' -print -exec sed -n '1,260p' {} \;
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase-2-ef-model-diagnostic
+          path: |
+            src/Moniter.Api/Data/DiagnosticMigrations/*Phase2Diagnostic.cs
+            src/Moniter.Api/Data/Migrations/MoniterDbContextModelSnapshot.cs
+          if-no-files-found: error
+          retention-days: 3
