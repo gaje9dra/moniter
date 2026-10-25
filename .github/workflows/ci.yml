@@ -23,8 +23,12 @@ jobs:
           node-version: 24
       - name: Install pinned pnpm
         run: npm install --global pnpm@10.20.0
-      - run: pnpm install --no-frozen-lockfile
-      - run: pnpm install --frozen-lockfile
+      - name: Resolve and commit-ready lockfile
+        run: pnpm install --no-frozen-lockfile
+      - name: Confirm frozen install is reproducible
+        run: pnpm install --frozen-lockfile
+      - name: Verify source control lockfile is complete
+        run: test -s pnpm-lock.yaml && grep -q '^snapshots:' pnpm-lock.yaml
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
