@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
-using Xunit;
 using Moniter.Agent;
+using Xunit;
 
 namespace Moniter.Agent.Tests;
 
