@@ -1,38 +1,33 @@
 # Phase 0.7 — Test Strategy and CI Baseline
 
-## Remote baseline evidence (2026-10-25)
+## Baseline before foundation implementation
 
-- GitHub repository: exists, public, default branch metadata is `main`.
-- Contents endpoint: 404, “This repository is empty.”
-- Commits endpoint: 409, “Git Repository is empty.”
-- Branches endpoint: empty array.
-- Actions runs endpoint: `total_count = 0`.
-- No project files, package manifests, workflows, tests or migration files are available; lint/typecheck/test/build/migration commands cannot be executed against the empty remote repository.
-- No successful CI result is claimed. Required checks and branch protection have not been verified from repository settings.
+The repository originally had Phase 0/Phase 1 planning documents only: no application code, manifests, or workflow. No tests could be run on that baseline.
 
-## Planned test layers
+## Current foundation workflow
 
-1. **Unit:** event validation, timestamps/clock drift, usage duration, redaction, policy evaluation, freshness thresholds, role policy.
-2. **Integration:** database constraints, atomic enrollment, credentials/revocation, event ingestion/deduplication, retention deletions, exports/audit.
-3. **Security:** tenant boundary matrix for every route/job/export/stream; RBAC; replay; rate limits; sensitive-domain exclusion; secret/dep scanning.
-4. **Agent:** supported Windows versions, visible installation/uninstallation, secure credential storage, offline queue limits, policy changes, signed update verification.
-5. **End-to-end:** authorized enrollment through actual endpoint event to correct authorized dashboard, revoke and ensure event access stops, verify reconnection/backfill and stale indicators.
-6. **Reliability:** API/database/realtime outages, queue overflow, duplicate/out-of-order events, clock skew, restart/recovery.
-7. **Performance:** measure ingestion, dashboard freshness and history queries under an agreed number of active devices and events. Set explicit SLOs before production.
+Workflow: `.github/workflows/ci.yml`. It runs:
+- Dashboard: Node 24, pinned pnpm 10.20.0 installation, frozen-lockfile install, lint, TypeScript typecheck, Vitest tests, Next.js production build.
+- .NET cross-platform: .NET 10 restore, formatting verification, Release build, xUnit tests and vulnerable dependency listing.
+- Windows agent: .NET 10 restore, Release build and xUnit test on `windows-latest`.
+- Secret scan: Gitleaks action, configured to scan checked-out tracked content.
 
-## Proposed baseline commands
+## Actual execution evidence
 
-Once the stack is selected, document exact commands in repository scripts and CI. Common gate categories: formatting/lint, type or compiler checks, unit tests, integration tests against a disposable test database, migration validation, production build/package, dependency audit, secret scan, and agent release signature verification. Commands here are categories only, not claims that commands have run.
+Initial CI run: https://github.com/gaje9dra/moniter/actions/runs/40158587979
 
-## CI policy
+Observed failures in that run:
+- Dashboard: `actions/setup-node` failed because pnpm was not installed before its cache setup, so lint/typecheck/tests/build did not execute.
+- .NET: restore succeeded; `dotnet format --verify-no-changes` failed on unformatted source/tests, so build/test/audit steps did not execute.
+- Secret scan: the Gitleaks action tried to scan a shallow PR merge range that was absent from the checkout and failed with an unknown revision. No claim of a clean secret scan can be based on that run.
 
-- Run required checks on pull requests and protected release branches.
-- Require green status for all applicable checks before merge/release.
-- Never skip tests, weaken assertions, suppress errors, or report a passing status without verified result.
-- Distinguish code-caused failures from unavailable services/credentials/infrastructure and attach reproducible evidence.
-- Test migration from a fresh database and supported previous schema.
-- Preserve logs/artifacts without secrets or sensitive endpoint activity.
+Further iteration:
+- CI now installs the exact pnpm version explicitly and no longer uses pnpm cache setup before pnpm exists.
+- Added .editorconfig and formatted the C# files identified by the formatter.
+- Removed a nonexistent `Microsoft.Extensions.Configuration.Memory` package reference from tests.
+- Gitleaks scan configuration is being corrected to scan tracked files without a shallow-merge base dependency.
+- Latest fixes must be revalidated by a fresh, completed workflow run before claiming any check passed.
 
-## Completion state
+## Acceptance and gates
 
-Baseline is **blocked**, not green, because there is no initial commit or workflow. Once code is committed, establish a real baseline and iteratively fix implementation-related failures.
+A green workflow is required. Do not mark cancelled jobs as passing. Retain failures as evidence, correct their root cause and rerun. Branch protection was observed disabled and must be configured manually or through an authorized repository-settings action.
