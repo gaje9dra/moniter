@@ -33,23 +33,23 @@ jobs:
           github-token: ${{ github.token }}
           path: artifact
 
-      - name: Verify artifact bytes
+      - name: Verify artifact integrity
         shell: bash
         run: |
           set -euo pipefail
           test -f artifact/pnpm-lock.yaml
-          test "$(wc -c < artifact/pnpm-lock.yaml | tr -d ' ')" = "140815"
+          actual_size="$(wc -c < artifact/pnpm-lock.yaml | tr -d ' ')"
+          test "$actual_size" = "140815"
           printf '%s  %s\n' '64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6' 'artifact/pnpm-lock.yaml' | sha256sum --check
-          grep -Fq "lockfileVersion: '9.0'" artifact/pnpm-lock.yaml
-          grep -q '^importers:' artifact/pnpm-lock.yaml
 
-      - name: Check expected target branch head and commit lockfile
+      - name: Check target branch head and commit verified lockfile
         shell: bash
         env:
           TARGET_BRANCH: feat/phase-1-foundation
           EXPECTED_HEAD: 2f151bac7508f2077d4d82daa4bdccc5f56dee7d
         run: |
           set -euo pipefail
+          cp artifact/pnpm-lock.yaml /tmp/pnpm-lock.yaml
           git fetch origin "$TARGET_BRANCH"
           actual_head="$(git rev-parse FETCH_HEAD)"
           if [ "$actual_head" != "$EXPECTED_HEAD" ]; then
@@ -57,7 +57,6 @@ jobs:
             exit 1
           fi
 
-          cp artifact/pnpm-lock.yaml /tmp/pnpm-lock.yaml
           git switch --detach "$actual_head"
           mkdir -p apps/dashboard
           cp /tmp/pnpm-lock.yaml apps/dashboard/pnpm-lock.yaml
