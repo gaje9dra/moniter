@@ -1,34 +1,31 @@
 # Phase 1 — Status and Sign-off
 
-**Last updated:** 2026-10-25  
-**Overall status:** FOUNDATION IMPLEMENTED; FINAL SIGN-OFF BLOCKED by committed lockfile reproducibility and review/branch-protection gates.
+**Status:** FOUNDATION MERGED; production/governance sign-off remains incomplete.
 
-| Subphase | Status | Evidence |
-|---|---|---|
-| 1.1 Architecture | Implemented/documented | Phase 0 technology decisions and architecture reconciled to Next.js/React/TypeScript and .NET 10; PostgreSQL/EF Core/SignalR are deferred |
-| 1.2 Project structure | Implemented | Dashboard, API, agent and xUnit/Vitest test project structure exists on feature branch |
-| 1.3 Environment/configuration | Initial baseline implemented | Node 24/pnpm 10.20.0, .NET 10, server-side API origin setting and agent config validation |
-| 1.4 Validation/errors | Initial baseline implemented | API correlation ID validation, safe generic internal error response, structured JSON diagnostics, agent config validation |
-| 1.5 Application shells/health | Implemented as foundation | Dashboard checks actual API liveness with 2.5-second timeout and unavailable state; API liveness/readiness; agent startup/shutdown/version diagnostics only |
-| 1.6 Code quality/tests | Commands green on latest completed run | Latest run 40159780444: frontend quality/test/build job succeeded; .NET and Windows test jobs succeeded |
-| 1.7 CI/CD | Four jobs green on latest observed run | Dashboard, .NET, Windows agent and Gitleaks secret scan all succeeded in run 40159780444 |
-| 1.8 Developer docs | Created | Setup, config, testing, CI, security baseline, limitations, foundation report |
-| 1.9 Security baseline | Initial checks passed | Gitleaks scan and per-project .NET vulnerability listing succeeded. This is not a complete security audit. |
-| 1.10 Final validation | Not passed | Full generated pnpm lockfile must be committed; rerun a strict frozen-lockfile-only build; PR review and branch-protection gate remain |
-
-## Exact source-control state
+## Evidence
 
 - Repository: https://github.com/gaje9dra/moniter
-- Branch: `feat/phase-1-foundation`
-- Current head (last verified when this status was written): `3383108ad72c6917d0ccbc686a9c28aacff426f2`
-- Draft PR: https://github.com/gaje9dra/moniter/pull/1
-- Latest all-green Actions run: https://github.com/gaje9dra/moniter/actions/runs/40159780444
-- `main` remains unprotected according to the repository branch metadata. Settings must be changed by the repository owner or an authorized settings API.
+- Merge commit on `main`: `63629e4d3fd10071350e2046fde505e0ace8d4ba`.
+- Merged PR: https://github.com/gaje9dra/moniter/pull/1
+- The committed dashboard lockfile is complete and has been independently verified.
+- All four jobs passed in [CI run 40162888119](https://github.com/gaje9dra/moniter/actions/runs/40162888119) on the PR head before merge: dashboard frozen install/lint/typecheck/tests/build, .NET API/agent checks, Windows agent build/tests, and secret scan.
 
-## Mandatory CI rule
+## Foundation acceptance
 
-DO NOT STOP WORKING BEFORE ALL REQUIRED CI CHECKS ARE GREEN AND ALL IMPLEMENTATION-RELATED ERRORS, FAILURES, AND ISSUES ARE FIXED. Keep investigating, implementing fixes, and rerunning the relevant checks until CI is green. Do not skip tests, weaken tests, suppress errors, bypass required checks, or claim success without actual verification.
+| Item | State |
+|---|---|
+| Dashboard shell and API liveness | Implemented |
+| ASP.NET Core API health endpoints | Implemented |
+| .NET Worker/Windows Service scaffold | Implemented; no monitoring collection |
+| Frontend and .NET tests | Present and passed on the merged PR head |
+| Full pnpm lockfile and frozen install | Verified and passed on the merged PR head |
+| Cross-platform/Windows CI and secret scan | Passed on the merged PR head |
+| Authentication, RBAC and tenant business APIs | Not implemented; Phase 3 scope |
+| PostgreSQL/EF Core | Phase 2 scope |
+| Production and legal approval | Pending |
 
-## Sign-off decision
+## Governance and release gates
 
-Do not mark Phase 1 complete until the committed pnpm lockfile is full/reproducible, CI is green on that exact lockfile commit, reviewers have approved, and all remaining organizational/legal blockers are explicit. Phase 2 has not started.
+GitHub reports `main` as unprotected, with required-status-check enforcement disabled. No PR reviews were recorded before merge. This is a governance gap, not evidence of failed code tests. Enable branch protection and required checks before merging subsequent phases.
+
+The foundation does not collect employee activity. Phase 0 privacy/legal approvals, role-based authorization, credential lifecycle, complete security review and production retention decisions remain gates before real employee data or monitoring can be enabled.

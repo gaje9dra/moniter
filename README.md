@@ -1,24 +1,24 @@
 # Moniter
 
-Moniter is the foundation for a disclosed, policy-governed employee monitoring and endpoint management platform for authorized company-managed Windows endpoints.
+Moniter is the foundation for a disclosed, policy-governed employee monitoring and endpoint-management platform for authorized company-managed Windows endpoints.
 
 ## Current scope
 
-This repository currently provides an application foundation only: a Next.js administration shell, an ASP.NET Core health API, a .NET Windows-agent service scaffold, configuration/error/logging conventions, tests, and CI. Employee activity collection, browser history collection, screen viewing, enrollment, authentication, tenant business models, and reporting are not implemented.
+The merged foundation provides a Next.js administration shell, ASP.NET Core health API, .NET Windows-agent scaffold, configuration/error/logging conventions, tests and CI. Phase 2 adds tenant-aware PostgreSQL persistence without exposing business APIs. No employee activity collection is implemented.
 
 ## Approved baseline
 
-- Node.js 24 LTS, pnpm, Next.js App Router, React, TypeScript
-- .NET 10 LTS, ASP.NET Core Web API, C#
-- PostgreSQL planned for later phases; no database integration/migration is included in the foundation
-- SignalR planned for authenticated realtime delivery; no monitoring stream is exposed in this foundation
-- xUnit, frontend tests, and GitHub Actions
+- Node.js 24 LTS, pnpm 10.20.0, Next.js App Router, React and TypeScript
+- .NET 10 LTS, ASP.NET Core Web API and C#
+- PostgreSQL and Entity Framework Core for tenant-aware persistence
+- SignalR planned for later authenticated real-time updates
+- xUnit, frontend tests and GitHub Actions with Linux and Windows checks
 
 ## Prerequisites
 
 - Node.js 24.x and Corepack/pnpm
 - .NET 10 SDK
-- For Windows Service hosting and agent CI: Windows 10/11 or a supported Windows runner; Linux can compile the generic worker project, but the Windows-specific service host is conditionally built only on Windows.
+- PostgreSQL 16 for database integration tests and local persistence development
 
 ## Local development
 
@@ -27,15 +27,8 @@ API:
 dotnet restore src/Moniter.Api/Moniter.Api.csproj
 dotnet run --project src/Moniter.Api/Moniter.Api.csproj
 ```
-API health: `GET http://localhost:5080/health/live`, readiness: `GET http://localhost:5080/health/ready`, OpenAPI: `/openapi/v1.json` in Development.
 
-Agent:
-```sh
-dotnet restore src/Moniter.Agent/Moniter.Agent.csproj
-dotnet test tests/Moniter.Agent.Tests/Moniter.Agent.Tests.csproj
-dotnet run --project src/Moniter.Agent/Moniter.Agent.csproj
-```
-The agent only validates configuration, emits version/diagnostic information, and starts/stops safely. It does not collect employee activity.
+Configure `ConnectionStrings__Moniter` or `MONITER_DATABASE_URL` with a PostgreSQL ADO.NET connection string. The process liveness endpoint `GET /health/live` does not depend on the database; `GET /health/ready` verifies database connectivity and returns unhealthy if PostgreSQL is unavailable or not configured.
 
 Dashboard:
 ```sh
@@ -45,10 +38,14 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
-pnpm dev
 ```
-Set `MONITER_API_BASE_URL` (server-side) to the API origin; default is `http://localhost:5080`. The dashboard health view calls the real API and shows unavailable/error states when the API cannot be reached.
 
-## Configuration and privacy
+Set `MONITER_API_BASE_URL` (server-side) to the API origin; the default is `http://localhost:5080`. The dashboard health view calls the real API and shows unavailable/error states if the API cannot be reached.
 
-See `docs/phase-1/development-setup.md`, `docs/phase-1/configuration-reference.md`, and `docs/phase-1/security-baseline.md`. Do not use production credentials or real employee devices for development. Activity-event retention is provisionally configured at 90 days for development/test design purposes only; this foundation does not persist activity events. Production retention requires jurisdiction-specific legal and organizational approval.
+## Migrations and tenant safety
+
+See `docs/phase-2/database-and-tenancy.md`. Database migrations are reviewed and run explicitly; the API does not apply them automatically at startup. Tenant-owned repository access requires a trusted organization context. Authentication and active-membership validation are not implemented yet, and no business endpoints expose tenant data.
+
+## Privacy and deployment boundaries
+
+This foundation does not collect employee activity, browser history, private messages, form contents, credentials or screen content. Do not use production credentials or real employee devices for development. Production monitoring requires jurisdiction-specific privacy/legal approval, authentication and authorization, tenant-isolation verification, retention/deletion enforcement and a reviewed release process.
