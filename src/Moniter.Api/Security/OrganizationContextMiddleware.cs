@@ -9,7 +9,7 @@ public sealed class OrganizationContextMiddleware(
     IdentityProviderConfiguration identityProvider,
     ILogger<OrganizationContextMiddleware> logger)
 {
-    public async Task InvokeAsync(HttpContext context, IOrganizationContextResolver resolver)
+    public async Task InvokeAsync(HttpContext context)
     {
         if (!context.Request.Path.StartsWithSegments("/api") ||
             context.User.Identity?.IsAuthenticated != true)
@@ -17,6 +17,11 @@ public sealed class OrganizationContextMiddleware(
             await next(context);
             return;
         }
+
+        // Resolve scoped database services only when an authenticated API request
+        // actually needs organization lookup. Health and anonymous routes must not
+        // instantiate the database context.
+        var resolver = context.RequestServices.GetRequiredService<IOrganizationContextResolver>();
 
         MoniterClaimTypes.RemoveServerContextClaims(context.User);
 
