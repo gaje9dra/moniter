@@ -1,28 +1,32 @@
 # Phase 0.7 — Test Strategy and CI Baseline
 
-## Original baseline
-Before the foundation work, the repository contained documentation only. There were no application manifests, source code, tests, or GitHub Actions workflows, so a runnable baseline could not be measured.
+## CI workflow
 
-## Current CI workflow
-Workflow: [CI](../../.github/workflows/ci.yml). Latest verified successful run: https://github.com/gaje9dra/moniter/actions/runs/40159780444 on commit `3383108ad72c6917d0ccbc686a9c28aacff426f2`.
+Workflow: [CI](../../.github/workflows/ci.yml). The workflow is expected to run on pull requests and pushes to `main` or `feat/**`.
 
-The workflow includes four jobs:
-- **Dashboard:** Node 24, pnpm 10.20.0, dependency resolution/frozen install, ESLint, TypeScript typecheck, Vitest tests, and Next.js production build.
-- **.NET:** .NET 10 restore, formatting verification, Release build, xUnit test command, and vulnerability listing for each of the four projects.
+Jobs:
+- **Dashboard:** Node.js 24, pinned pnpm 10.20.0, frozen dependency installation, ESLint, TypeScript typecheck, Vitest, and Next.js production build.
+- **.NET API and agent:** .NET 10 restore, formatting verification, Release build, xUnit tests, and vulnerability listing for the API, agent and test projects.
 - **Windows agent:** Windows runner restores, builds and tests the agent.
-- **Secret scan:** Gitleaks scans checked-out files using v8.24.3.
+- **Secret scan:** Gitleaks scans checked-out files.
 
-## Observed results
-Run `40159780444` concluded **success**. All four jobs completed successfully:
-- Dashboard / lint, typecheck, tests, build — success.
-- .NET API + agent / restore, build, tests — success.
-- Windows agent / Windows build and tests — success.
-- Secret scan — success.
+## Observed results and required correction
 
-Earlier failed runs are retained in GitHub Actions history and were used to fix pnpm setup, lockfile resolution, C# formatting, xUnit imports, missing OpenAPI dependency, vulnerable OpenAPI dependency, audit asset discovery, and shallow-history secret scanning. Do not treat cancelled historical runs as passing.
+Run [40159780444](https://github.com/gaje9dra/moniter/actions/runs/40159780444) completed successfully on 2026-10-25. The dashboard job succeeded only after running `pnpm install --no-frozen-lockfile`, validating a second frozen install and uploading the generated lockfile as an artifact. That run does **not** prove that the committed lockfile alone is reproducible.
 
-## Dependency lockfile caveat
-The dashboard CI currently resolves an incomplete checked-in lockfile during the run, validates the generated lockfile with a second frozen install, and uploads it as an artifact. The artifact was recovered, but its full content has **not yet been successfully committed** as the complete `apps/dashboard/pnpm-lock.yaml`. This is a remaining reproducibility blocker: a successful workflow does not prove that the committed lockfile alone is complete, because the first install updates it in the runner. Update CI to use frozen-lockfile only after the generated file is correctly committed.
+Run [40160244523](https://github.com/gaje9dra/moniter/actions/runs/40160244523) completed with failure on 2026-10-25. The dashboard failed at `pnpm install --frozen-lockfile`; the checked-in lockfile was incomplete. The .NET API/agent job, Windows-agent job, and secret scan succeeded. The failed dashboard install prevented lint, typecheck, frontend tests and build from running in that attempt.
 
-## Sign-off gate
-Although the latest observed CI run is green, Phase 0 and Phase 1 cannot be signed off until the full generated pnpm lockfile is committed, a fresh workflow passes against that committed lockfile without resolving/modifying it, test counts are confirmed, and the final PR/branch configuration is reviewed.
+The generated full lockfile was downloaded from run 40159780444 for recovery. A fresh workflow is required after that complete lockfile is committed and the CI step no longer mutates/regenerates it.
+
+## Acceptance requirements
+
+- CI must use `pnpm install --frozen-lockfile` as the only dashboard install path.
+- CI must fail on any installation, lint, typecheck, test, build, .NET, Windows-agent, vulnerability-audit or secret-scan failure.
+- No credentials or real endpoint devices are required for default checks.
+- Windows-specific build and test results must originate from a Windows runner.
+- Report actual test counts from job logs where accessible; do not infer counts from a green job summary.
+- Do not call the baseline complete while a required check is pending, failed, skipped due to prerequisite failure, or not available for verification.
+
+## Governance note
+
+Branch-protection inspection returned HTTP 403 ("Resource not accessible by integration"). Required checks/reviews settings are unverified through the current connection; repository administrators must inspect GitHub Settings → Rules/Branches directly.
