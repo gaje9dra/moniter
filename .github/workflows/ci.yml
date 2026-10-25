@@ -23,8 +23,6 @@ jobs:
           node-version: 24
       - name: Install pinned pnpm
         run: npm install --global pnpm@10.20.0
-      - name: Verify lockfile/install
-        run: pnpm install --lockfile-only
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
