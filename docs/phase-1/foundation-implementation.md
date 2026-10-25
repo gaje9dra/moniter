@@ -1,46 +1,22 @@
-# Phase 1.1 — Approved Architecture Verification
+# Phase 1 — Foundation Implementation Record
 
-**Date:** 2026-10-25  
-**Repository:** https://github.com/gaje9dra/moniter  
-**Branch:** `main`  
-**Decision:** BLOCKED — Phase 0 sign-off prerequisites are not satisfied. No Phase 1 application implementation has started.
+**Status:** Foundation merged to `main`; production sign-off is still blocked by governance and privacy/security release gates.
 
-## Repository state verified
+## Verified source state
 
-The repository now contains the Phase 0 documentation under `docs/phase-0/`. The current top-level Contents API shows only `docs/`; the `.github/workflows` path does not exist. The repository metadata reports `main` as the default branch. The branch is reported as unprotected. No GitHub Actions workflow runs were found in the latest check.
+The repository contains the Next.js dashboard, ASP.NET Core API, .NET Worker/Windows Service scaffold, xUnit and Vitest tests, GitHub Actions CI, the committed pnpm lockfile and Phase 0/1 architecture and security documentation.
 
-## Phase 0 prerequisite review
+The merge commit is `63629e4d3fd10071350e2046fde505e0ace8d4ba`. PR #1 is merged: https://github.com/gaje9dra/moniter/pull/1.
 
-The Phase 0 status document explicitly says Phase 0 is incomplete. The following prerequisites remain unresolved:
+The full CI run [40162888119](https://github.com/gaje9dra/moniter/actions/runs/40162888119) passed on the pull-request head before merge. It included dashboard frozen installation/lint/typecheck/tests/build, .NET API and agent checks, Windows agent build/tests, and secret scan.
 
-1. **No actual implementation or stack:** no frontend, backend, database schema, Windows agent, package manifests, lockfiles, or build configuration exists.
-2. **Architecture is provisional:** `docs/phase-0/technology-decisions.md` explicitly treats framework, API, Windows implementation technology, database, realtime transport and identity provider as candidates rather than approved choices.
-3. **No runnable CI:** no workflow exists, so lint/typecheck/test/build/migration and security checks cannot yet run.
-4. **No branch protection:** GitHub reports `main` as unprotected; required-check enforcement is not configured/verified.
-5. **Product governance remains open:** deployment constraints, retention periods and jurisdiction-specific privacy/legal review require decisions.
-6. **Phase 0 final validation has not passed:** the Phase 0 status record says sign-off is not passed.
+## Current limits
 
-## Phase 1 scope decision
+- The application does not authenticate users or authorize tenant membership.
+- No PostgreSQL schema or persistence existed in Phase 1.
+- No agent enrollment, activity ingestion, browser collection, screen viewing, SignalR, or employee activity persistence is implemented.
+- `main` is reported by GitHub as unprotected; required CI checks and PR reviews are not enforced.
 
-The prompt requires Phase 0 to be completed and the architecture approved before proceeding. It also forbids silently assuming technology choices. Therefore, proceeding with a dashboard, backend, agent scaffold, configuration schema, or CI commands would require selecting unapproved technologies and would violate the phase gate.
+## Transition
 
-No runtime or dependency has been selected, installed, or changed. No Phase 2 business functionality has been started.
-
-## Required unblock sequence
-
-1. Review and approve the Phase 0 requirements and proposed architecture.
-2. Select the actual dashboard/backend/agent technology, database, identity approach and supported development environment.
-3. Decide required retention and deployment constraints with appropriate privacy/legal review.
-4. Bootstrap the repository with the approved stack and initial manifests.
-5. Add CI workflows and configure protected branch required checks.
-6. Re-run Phase 0.1 and Phase 0.7 against actual source and execute Phase 0.9 sign-off.
-7. Resume Phase 1 only after those prerequisites are satisfied.
-
-## Evidence
-
-- [Phase 0 status](../phase-0/phase-status.md)
-- [Architecture proposal](../phase-0/architecture.md)
-- [Technology decisions](../phase-0/technology-decisions.md)
-- [Testing and CI baseline](../phase-0/testing-and-ci.md)
-- [Repository workflow directory lookup](https://github.com/gaje9dra/moniter/tree/main/.github/workflows) (does not currently exist)
-- [Main branch](https://github.com/gaje9dra/moniter/tree/main)
+Phase 2 introduces the initial PostgreSQL/EF Core tenant schema, tenant-scoped repositories and database integration tests on a dedicated branch. Its merge remains gated on passing phase-specific CI, migration/isolation review, and repository governance improvements. Authentication and authorization remain Phase 3 scope.

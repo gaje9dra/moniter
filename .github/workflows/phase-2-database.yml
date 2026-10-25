@@ -1,0 +1,52 @@
+name: Phase 2 Database Verification
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feat/phase-2-multitenant-database
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase-2-database-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres-integration:
+    name: PostgreSQL migrations and tenant isolation
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: moniter_test
+          POSTGRES_USER: moniter_test
+          POSTGRES_PASSWORD: moniter_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U moniter_test -d moniter_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: dotnet restore Moniter.sln
+      - name: Verify formatting
+        run: dotnet format Moniter.sln --verify-no-changes --no-restore --verbosity minimal
+      - name: Build
+        run: dotnet build Moniter.sln --no-restore --configuration Release
+      - name: Run tests with PostgreSQL integration enabled
+        run: dotnet test Moniter.sln --no-build --configuration Release --logger "console;verbosity=normal"
+        env:
+          MONITER_TEST_DATABASE: "Host=localhost;Port=5432;Database=moniter_test;Username=moniter_test;Password=moniter_test_password;Timeout=5;Command Timeout=10"
+      - name: Check .NET package advisories
+        run: dotnet list Moniter.sln package --vulnerable --include-transitive
