@@ -5,19 +5,17 @@
 |---|---|---|---|
 | `MONITER_API_BASE_URL` | No, local development | `http://localhost:5080` | Absolute HTTP(S) URL; HTTPS required in Production. |
 
-Dashboard API calls use a 2.5 second timeout and do not cache liveness. The configuration is server-side and must not be exposed via a `NEXT_PUBLIC_` variable.
+Dashboard API calls use a 2.5-second timeout. The setting is server-side only and must not use a `NEXT_PUBLIC_` prefix.
 
 ## API
-- `ASPNETCORE_ENVIRONMENT`: standard ASP.NET Core environment; Development enables OpenAPI document endpoint.
-- `ASPNETCORE_URLS`: optional host URL override; launch profile defaults to `http://localhost:5080`.
-- No database connection string is required in this foundation. Do not add production secrets to tracked settings.
+- `ASPNETCORE_ENVIRONMENT`: standard ASP.NET Core environment; Development exposes the foundation's OpenAPI document at `/openapi`.
+- `ASPNETCORE_URLS`: optional host URL override; the launch profile defaults to `http://localhost:5080`.
+- No database connection string is required. No PostgreSQL provider is wired yet.
 
 ## Agent
-- `Moniter:Environment`: default `Development`; 1-40 characters.
+- `Moniter:Environment`: default `Development`; 1–40 characters.
 - `Moniter:DiagnosticLevel`: default `Information`; one of Trace, Debug, Information, Warning, Error, Critical, None.
-- Values can be set via .NET configuration sources/standard environment variable mapping (e.g. `Moniter__Environment`). Invalid configuration causes an actionable startup error.
+- Environment variable mapping uses double underscore, e.g. `Moniter__Environment`. Invalid settings fail with an actionable startup error.
 
-## Secret handling
-- Never commit `.env.local`, production config files, tokens, signing keys, or database credentials.
-- Keep CI independent of production services and credentials.
-- API error responses contain a generic title and correlation ID; sensitive exception message/stack is not returned to clients.
+## Secrets
+Never commit production config, tokens, signing keys, database credentials or `.env.local`. API clients receive a generic unexpected-error response and correlation ID; internal error logging excludes exception messages and stack traces.
