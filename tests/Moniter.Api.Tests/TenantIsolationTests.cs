@@ -5,6 +5,7 @@ using Moniter.Api.Data;
 using Moniter.Api.Data.Entities;
 using Moniter.Api.Data.Repositories;
 using Moniter.Api.Data.Tenancy;
+using Moniter.Api.Security;
 using Xunit;
 
 namespace Moniter.Api.Tests;
@@ -139,12 +140,29 @@ public sealed class TenantIsolationTests
     }
 
     [Fact]
-    public void Http_tenant_context_reads_one_valid_claim_from_an_authenticated_principal()
+    public void Http_tenant_context_requires_the_server_resolved_context_marker()
     {
         var organizationId = Guid.NewGuid();
         var identity = new ClaimsIdentity(new[]
         {
             new Claim(TenantClaimTypes.OrganizationId, organizationId.ToString())
+        }, "test-authentication");
+        var tenantContext = new HttpTenantContext(new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+        });
+
+        Assert.Null(tenantContext.OrganizationId);
+    }
+
+    [Fact]
+    public void Http_tenant_context_reads_a_valid_server_resolved_context()
+    {
+        var organizationId = Guid.NewGuid();
+        var identity = new ClaimsIdentity(new[]
+        {
+            new Claim(TenantClaimTypes.OrganizationId, organizationId.ToString()),
+            new Claim(MoniterClaimTypes.OrganizationContextResolved, "true")
         }, "test-authentication");
         var tenantContext = new HttpTenantContext(new HttpContextAccessor
         {
