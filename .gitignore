@@ -1,0 +1,28 @@
+# Node / Next.js
+node_modules/
+.pnpm-store/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# .NET
+**/bin/
+**/obj/
+TestResults/
+artifacts/
+
+# Local configuration / secrets
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+secrets.json
+*.user
+*.suo
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

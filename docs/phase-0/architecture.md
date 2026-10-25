@@ -1,51 +1,40 @@
 # Phase 0.3 — Technical Architecture
 
-**Status:** Proposed architecture; not an audit of existing code. The repository is empty, so decisions remain subject to implementation constraints and stakeholder approval.
+**Status:** Approved foundation architecture; full production architecture remains gated on later phase decisions.
 
-## Logical components
+## Foundation components
 
-1. **Administration web app:** employee/device management, policies, dashboards, audit, reporting. Authenticated user sessions; no direct database access.
-2. **Backend API:** authentication integration, tenant authorization, enrollment lifecycle, policy distribution, event ingestion, historical queries, exports and audit.
-3. **Windows endpoint agent:** visible/managed installation, device identity, policy-controlled application observation, optional supported browser metadata integration, heartbeat, bounded encrypted local queue, signed updates.
-4. **Relational database:** existing supported database if one is selected later; PostgreSQL is a candidate for transactional tenant-scoped records and indexed historical activity.
-5. **Event processing:** validation, authentication, deduplication, policy enforcement, durable persistence and derived usage calculations.
-6. **Realtime delivery:** authenticated tenant/role-filtered events; dashboard must reconcile with persisted state after reconnect.
-7. **Operations:** CI/CD, secrets management, metrics, redacted logs, backups, restore tests and incident response.
+1. **Administration dashboard:** Next.js App Router, React and TypeScript on Node.js 24, in `apps/dashboard`. It provides an accessible shell and a real backend liveness view, with explicit API-unavailable/error states.
+2. **Backend API:** ASP.NET Core Web API on .NET 10 in `src/Moniter.Api`. It exposes service information, liveness and readiness, OpenAPI in Development, correlation identifiers, JSON structured logs and a safe exception response.
+3. **Windows endpoint agent:** .NET 10 Worker Service in `src/Moniter.Agent`; conditionally hosted as a Windows Service on Windows. This phase covers configuration, version reporting, diagnostics, startup and shutdown only.
+4. **Tests:** xUnit API and agent tests in `tests/`; Vitest tests in the dashboard package.
+5. **Automation:** GitHub Actions under `.github/workflows/ci.yml`, with Linux checks plus a Windows-specific agent build/test job.
 
-## Architecture principles
+## Planned but not implemented in this foundation
 
-- Enforce tenant boundaries server-side and, if PostgreSQL is selected, consider row-level security as defense in depth alongside application authorization.
-- Never accept organization ownership solely from an agent or client payload; derive ownership from authenticated device identity.
-- Separate high-volume append-oriented activity events from mutable device and policy state.
-- Use versioned contracts and migrations; no undocumented coupling between agent and API.
-- Realtime is a delivery optimization, not the system of record; persisted accepted events are authoritative.
-- Use the repository's technology only once a real codebase exists. Avoid selecting new libraries until support, security, licensing and operational fit are evaluated.
+- PostgreSQL and Entity Framework Core migrations.
+- Authentication, multi-tenant business models and authorization.
+- Agent enrollment, credential issuance and activity-event ingestion.
+- SignalR authenticated activity delivery.
+- Browser metadata integration, screen viewing, reporting, retention jobs and production deployment.
 
-## Event lifecycle
+## Data-flow boundary
 
-1. Organization administrator authorizes enrollment.
-2. Enrollment exchange binds an approved endpoint to an organization and creates a device-scoped identity.
-3. Agent requests policy; server authenticates the device, checks status and returns the approved versioned policy.
-4. Agent emits minimized events with unique event IDs, sequence/capture timestamps and policy version.
-5. API authenticates device, applies rate/size/schema checks and verifies policy/tenant association.
-6. Event is deduplicated and persisted transactionally; derived records are updated idempotently.
-7. Realtime notification is published only after persistence and scoped to authorized subscribers.
-8. Dashboard updates the view and labels freshness based on heartbeat/event timestamps.
-9. Historical reports query persisted events with tenant authorization and retention filtering.
-10. Revocation disables policy/event access immediately and invalidates device credentials.
+The dashboard calls `GET /health/live` on the configured API origin. The API returns a service status and version. If unavailable, dashboard rendering surfaces a clear unavailable state. The agent does not connect to production services and does not collect user or application activity.
+
+## Security principles
+
+- No production credentials are required to run development or CI.
+- The API emits only exception type and correlation ID in unexpected failure logs, not exception message/stack trace, to reduce risk of sensitive-value leakage.
+- Correlation IDs accept only ASCII letters, digits, underscore and hyphen, length <= 64; invalid values are replaced.
+- No employee activity or browser data is written in this phase.
+- TLS is mandatory for a production API origin; local HTTP is permitted for development only.
+- Later phases must enforce tenant isolation, server-side authorization, secure endpoint credentials, event deduplication, policy enforcement and signed updates before real monitoring is enabled.
+
+## Operational considerations
+
+API liveness is independent of external dependencies. Readiness currently reports the host's health-check pipeline; because no external dependency is connected, it must not be interpreted as database readiness. When PostgreSQL is introduced, database readiness checks must be added and tested against the configured connection.
 
 ## Failure recovery
 
-- Agent offline: bounded encrypted local queue, TTL and maximum size; discard according to policy and report dropped-event counters rather than buffering indefinitely.
-- Retry: exponential backoff with jitter, server-directed retry hints and stable event IDs.
-- Duplicate delivery: unique database constraint on (device_id, event_id), with safe idempotent acknowledgement.
-- Out-of-order delivery: retain capture time and ingestion time separately; use a documented late-arrival policy.
-- Clock drift: server receive time is separate; flag anomalous device clock offsets rather than rewriting original timestamps silently.
-- Realtime loss: reconnect, re-authorize and refresh from persisted cursor/history.
-- Database or queue outage: return retryable response, maintain bounded queue/backpressure, alert operators and avoid acknowledging events before durable acceptance.
-- Compromised/revoked device: deny ingestion, invalidate credentials and create security audit record.
-- Agent upgrade: signed releases, staged rollout, compatibility window, health reporting and rollback.
-
-## Operations and recovery
-
-Define backup RPO/RTO before production. Encrypt backups, restrict access, test restoration in an isolated environment, monitor ingestion latency/error rate/queue depth/heartbeat freshness, and document emergency revocation and incident procedures.
+API request correlation is returned in `X-Correlation-ID`; dashboard uses a bounded timeout and graceful error handling. Agent cancellation token drives safe worker shutdown. Durable offline buffering, event retries, realtime reconnection and signed updates are later-phase responsibilities.
