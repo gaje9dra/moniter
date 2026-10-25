@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moniter.Api.Data.Entities;
 using Moniter.Api.Data.Tenancy;
@@ -44,7 +45,12 @@ public sealed class OrganizationContextMiddlewareTests
                 expectedOrganizationId,
                 MembershipRole.Member));
 
-        await middleware.InvokeAsync(context, resolver);
+        using var services = new ServiceCollection()
+            .AddSingleton<IOrganizationContextResolver>(resolver)
+            .BuildServiceProvider();
+        context.RequestServices = services;
+
+        await middleware.InvokeAsync(context);
 
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
         Assert.Single(context.User.FindAll(MoniterClaimTypes.OrganizationId));
@@ -75,8 +81,13 @@ public sealed class OrganizationContextMiddlewareTests
             new IdentityProviderConfiguration("https://identity.example.test", "moniter-api", true),
             NullLogger<OrganizationContextMiddleware>.Instance);
 
-        await middleware.InvokeAsync(context, new FixedOrganizationContextResolver(
-            OrganizationContextResolution.Rejected(OrganizationContextFailure.NoActiveMembership)));
+        using var services = new ServiceCollection()
+            .AddSingleton<IOrganizationContextResolver>(new FixedOrganizationContextResolver(
+                OrganizationContextResolution.Rejected(OrganizationContextFailure.NoActiveMembership)))
+            .BuildServiceProvider();
+        context.RequestServices = services;
+
+        await middleware.InvokeAsync(context);
 
         Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
     }
