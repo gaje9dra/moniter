@@ -23,6 +23,7 @@ jobs:
           node-version: 24
       - name: Install pinned pnpm
         run: npm install --global pnpm@10.20.0
+      - run: pnpm install --no-frozen-lockfile
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
@@ -57,6 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Scan checked-out files (not shallow Git history)
+        uses: docker://ghcr.io/gitleaks/gitleaks:v8.24.3
+        with:
+          args: dir --redact --exit-code=2 .
