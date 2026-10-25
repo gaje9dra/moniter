@@ -41,7 +41,6 @@ jobs:
       - run: dotnet format Moniter.sln --verify-no-changes --no-restore --verbosity minimal
       - run: dotnet build Moniter.sln --no-restore --configuration Release
       - run: dotnet test Moniter.sln --no-build --configuration Release --logger "console;verbosity=normal"
-      - run: dotnet restore Moniter.sln
       - run: dotnet list src/Moniter.Api/Moniter.Api.csproj package --vulnerable --include-transitive
       - run: dotnet list src/Moniter.Agent/Moniter.Agent.csproj package --vulnerable --include-transitive
       - run: dotnet list tests/Moniter.Api.Tests/Moniter.Api.Tests.csproj package --vulnerable --include-transitive
