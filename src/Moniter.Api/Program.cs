@@ -123,10 +123,22 @@ app.Use(async (context, next) =>
         }
         catch (Exception ex)
         {
-            app.Logger.LogError(
-                "Unhandled request failure. CorrelationId={CorrelationId}, ExceptionType={ExceptionType}",
-                correlationId,
-                ex.GetType().Name);
+            if (app.Environment.IsDevelopment())
+            {
+                // Preserve exception details only in development diagnostics. Production
+                // logs keep the established sanitized record and never return internals.
+                app.Logger.LogError(
+                    ex,
+                    "Unhandled development request failure. CorrelationId={CorrelationId}",
+                    correlationId);
+            }
+            else
+            {
+                app.Logger.LogError(
+                    "Unhandled request failure. CorrelationId={CorrelationId}, ExceptionType={ExceptionType}",
+                    correlationId,
+                    ex.GetType().Name);
+            }
             context.Response.Clear();
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             context.Response.ContentType = "application/problem+json";
