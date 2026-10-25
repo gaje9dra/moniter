@@ -37,10 +37,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          LOCKFILE="artifact/pnpm-lockfile/pnpm-lock.yaml"
           python3 - <<'PY'
           from pathlib import Path
           import hashlib
-          p = Path("artifact/pnpm-lock.yaml")
+          p = Path("artifact/pnpm-lockfile/pnpm-lock.yaml")
           data = p.read_bytes()
           digest = hashlib.sha256(data).hexdigest()
           print(f"Recovered file: {p}")
@@ -63,7 +64,7 @@ jobs:
           EXPECTED_HEAD: 2f151bac7508f2077d4d82daa4bdccc5f56dee7d
         run: |
           set -euo pipefail
-          cp artifact/pnpm-lock.yaml /tmp/pnpm-lock.yaml
+          cp artifact/pnpm-lockfile/pnpm-lock.yaml /tmp/pnpm-lock.yaml
           git fetch origin "$TARGET_BRANCH"
           actual_head="$(git rev-parse FETCH_HEAD)"
           if [ "$actual_head" != "$EXPECTED_HEAD" ]; then
