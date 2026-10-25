@@ -1,0 +1,86 @@
+name: Recover verified pnpm lockfile
+
+on:
+  push:
+    branches:
+      - recovery/phase-0-7-lockfile
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: moniter-lockfile-recovery
+  cancel-in-progress: false
+
+jobs:
+  recover-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout recovery branch
+        uses: actions/checkout@v4
+        with:
+          ref: recovery/phase-0-7-lockfile
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Download original verified artifact
+        uses: actions/download-artifact@v4
+        with:
+          repository: gaje9dra/moniter
+          run-id: 40159780444
+          artifact-ids: 12586430553
+          github-token: ${{ github.token }}
+          path: artifact
+
+      - name: Verify artifact bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f artifact/pnpm-lock.yaml
+          test "$(wc -c < artifact/pnpm-lock.yaml | tr -d ' ')" = "140815"
+          printf '%s  %s\n' '64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6' 'artifact/pnpm-lock.yaml' | sha256sum --check
+          grep -Fq "lockfileVersion: '9.0'" artifact/pnpm-lock.yaml
+          grep -Fq '^' /dev/null && exit 1 || true
+
+      - name: Check expected target branch head and commit lockfile
+        shell: bash
+        env:
+          TARGET_BRANCH: feat/phase-1-foundation
+          EXPECTED_HEAD: 2f151bac7508f2077d4d82daa4bdccc5f56dee7d
+        run: |
+          set -euo pipefail
+          git fetch origin "$TARGET_BRANCH"
+          actual_head="$(git rev-parse FETCH_HEAD)"
+          if [ "$actual_head" != "$EXPECTED_HEAD" ]; then
+            echo "::error::Target branch moved. Expected $EXPECTED_HEAD but found $actual_head. Refusing to overwrite changes."
+            exit 1
+          fi
+
+          git switch --detach "$actual_head"
+          cp artifact/pnpm-lock.yaml /tmp/pnpm-lock.yaml
+          mkdir -p apps/dashboard
+          cp /tmp/pnpm-lock.yaml apps/dashboard/pnpm-lock.yaml
+          test "$(wc -c < apps/dashboard/pnpm-lock.yaml | tr -d ' ')" = "140815"
+          printf '%s  %s\n' '64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6' 'apps/dashboard/pnpm-lock.yaml' | sha256sum --check
+
+          git add apps/dashboard/pnpm-lock.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(dashboard): restore complete pnpm lockfile"
+          git push origin HEAD:refs/heads/"$TARGET_BRANCH"
+
+      - name: Verify remote lockfile and report commit
+        shell: bash
+        env:
+          TARGET_BRANCH: feat/phase-1-foundation
+        run: |
+          set -euo pipefail
+          git fetch origin "$TARGET_BRANCH"
+          remote_head="$(git rev-parse FETCH_HEAD)"
+          remote_blob="$(git rev-parse FETCH_HEAD:apps/dashboard/pnpm-lock.yaml)"
+          echo "Remote branch head: $remote_head"
+          echo "Remote lockfile blob: $remote_blob"
+          git show FETCH_HEAD:apps/dashboard/pnpm-lock.yaml > /tmp/remote-pnpm-lock.yaml
+          test "$(wc -c < /tmp/remote-pnpm-lock.yaml | tr -d ' ')" = "140815"
+          printf '%s  %s\n' '64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6' '/tmp/remote-pnpm-lock.yaml' | sha256sum --check
