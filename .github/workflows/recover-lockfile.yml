@@ -41,7 +41,7 @@ jobs:
           test "$(wc -c < artifact/pnpm-lock.yaml | tr -d ' ')" = "140815"
           printf '%s  %s\n' '64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6' 'artifact/pnpm-lock.yaml' | sha256sum --check
           grep -Fq "lockfileVersion: '9.0'" artifact/pnpm-lock.yaml
-          grep -Fq '^' /dev/null && exit 1 || true
+          grep -Fq '^importers:' artifact/pnpm-lock.yaml
 
       - name: Check expected target branch head and commit lockfile
         shell: bash
@@ -57,8 +57,8 @@ jobs:
             exit 1
           fi
 
-          git switch --detach "$actual_head"
           cp artifact/pnpm-lock.yaml /tmp/pnpm-lock.yaml
+          git switch --detach "$actual_head"
           mkdir -p apps/dashboard
           cp /tmp/pnpm-lock.yaml apps/dashboard/pnpm-lock.yaml
           test "$(wc -c < apps/dashboard/pnpm-lock.yaml | tr -d ' ')" = "140815"
@@ -84,3 +84,15 @@ jobs:
           git show FETCH_HEAD:apps/dashboard/pnpm-lock.yaml > /tmp/remote-pnpm-lock.yaml
           test "$(wc -c < /tmp/remote-pnpm-lock.yaml | tr -d ' ')" = "140815"
           printf '%s  %s\n' '64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6' '/tmp/remote-pnpm-lock.yaml' | sha256sum --check
+
+      - name: Remove temporary recovery workflow from recovery branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin recovery/phase-0-7-lockfile
+          git switch -C recovery/phase-0-7-lockfile FETCH_HEAD
+          git rm .github/workflows/recover-lockfile.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: remove one-time lockfile recovery workflow"
+          git push origin HEAD:refs/heads/recovery/phase-0-7-lockfile
