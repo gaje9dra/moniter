@@ -1,6 +1,12 @@
 # Phase 3 — Authentication and Authorization
 
-**Status:** Implementation submitted for CI verification. Production identity-provider integration and independent security review remain outstanding.
+**Status:** Implementation and automated verification pass on commit `6531f0df2847908effe98c78f46a5a0a909b0ffb`. Production identity-provider integration, real-token/MFA verification, independent security review, and repository governance remain outstanding.
+
+- Full repository CI: https://github.com/gaje9dra/moniter/actions/runs/40174711160 — passed on the implementation commit.
+- PR CI: https://github.com/gaje9dra/moniter/actions/runs/40174714391 — passed on the implementation commit.
+- PostgreSQL migrations and tenant-isolation verification: https://github.com/gaje9dra/moniter/actions/runs/40174714406 — passed on the implementation commit.
+
+These checks prove build, unit-test, and PostgreSQL integration workflow success; they do not prove production identity-provider interoperability or security approval. Keep the required checks green on the final exact PR head.
 
 ## Delivered in this branch
 
@@ -30,7 +36,7 @@ The API authorization fallback requires authentication on endpoints unless they 
 2. Provision UserIdentity and active OrganizationMembership rows through a separately authorized administrative process. This phase intentionally does not implement self-service account linking or membership grants.
 3. Validate real access-token signature, issuer, audience, expiry, and MFA claims against the actual provider.
 4. Review tenant selection, membership queries, role policy coverage, logging/retention, and failure behavior independently.
-5. Require full repository CI and PostgreSQL migration/tenant-isolation CI to pass on the exact PR head.
+5. Keep full repository CI and PostgreSQL migration/tenant-isolation CI green on the exact final PR head.
 6. Configure and enforce main branch protection and review requirements before subsequent merges.
 
 No login UI, identity-provider tenant, client secret, membership-management API, employee monitoring, activity collection, or screen viewing was added.
