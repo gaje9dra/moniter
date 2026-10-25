@@ -113,7 +113,9 @@ public sealed class TenantIsolationTests
     [Fact]
     public async Task Tenant_owned_writes_are_rejected_without_a_trusted_tenant()
     {
-        var options = new DbContextOptionsBuilder<MoniterDbContext>().Options;
+        var options = new DbContextOptionsBuilder<MoniterDbContext>()
+            .UseNpgsql("Host=localhost;Port=1;Database=not_used;Username=not_used;Password=not_used;Timeout=1")
+            .Options;
         await using var dbContext = new MoniterDbContext(options, new TestTenantContext(null));
         dbContext.Departments.Add(new Department { OrganizationId = Guid.NewGuid(), Name = "Not allowed" });
 
