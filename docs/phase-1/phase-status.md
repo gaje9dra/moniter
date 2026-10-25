@@ -1,32 +1,31 @@
 # Phase 1 — Status and Sign-off
 
 **Last updated:** 2026-10-25  
-**Overall status:** BLOCKED at Phase 1.1 because the Phase 0 prerequisite is incomplete.
+**Overall status:** IN PROGRESS — foundation implementation exists on the feature branch; real CI checks are being iterated.
 
-| Subphase | Status | Reason |
+| Subphase | Status | Evidence / blocker |
 |---|---|---|
-| 1.1 Verify approved architecture | Reviewed; blocked | Phase 0 status is incomplete and architecture decisions remain provisional |
-| 1.2 Project structure | Not started | Must not create scaffolding around an unapproved stack |
-| 1.3 Development environment/configuration | Not started | No runtime, package manager, compiler or environment schema is selected |
-| 1.4 Shared types/validation/errors | Not started | No approved language/framework or existing components |
-| 1.5 Application shells/health checks | Not started | No approved web/backend/agent technologies |
-| 1.6 Quality/testing | Blocked | No source code or test tooling exists |
-| 1.7 CI/CD | Blocked pending stack approval | No workflow exists; main is unprotected |
-| 1.8 Developer documentation | Partial prerequisite record only | Accurate setup commands cannot be documented until stack selection |
-| 1.9 Security/dependency baseline | Blocked for code-level checks | No dependencies or application code to scan |
-| 1.10 Final validation | Not passed | No implementation or runnable CI; Phase 0 gate remains open |
+| 1.1 Architecture | Baseline approved and documented | PostgreSQL/EF Core/SignalR remain planned for later phases |
+| 1.2 Project structure | Initial projects created | Dashboard, API, agent and test projects exist; package/build verification pending |
+| 1.3 Environment/configuration | Setup docs and safe defaults created | Clean reproducible install not yet green |
+| 1.4 Validation/errors | Initial foundation created | Correlation ID validation, generic API error body and agent config validation; tests pending CI |
+| 1.5 Shells/health | Initial implementation created | Dashboard uses real backend liveness; API has liveness/readiness/OpenAPI dev; agent is non-collecting |
+| 1.6 Quality/testing | Not green yet | Initial CI found pnpm setup and .NET formatting/restore problems; fixes committed |
+| 1.7 CI/CD | Workflow created, validation ongoing | Linux and Windows jobs plus secret scan; actual successful run required |
+| 1.8 Developer docs | Documents created | Setup/config/testing/CI/security/limitations docs |
+| 1.9 Security baseline | Documented at foundation level | Full security audit and production controls are not in scope |
+| 1.10 Final validation | Not passed | Wait for green fresh workflow run and evidence-based Phase 0 revalidation |
 
-## Verified facts
+## Repository references
 
-- Repository: https://github.com/gaje9dra/moniter
-- Branch: `main`
-- Top-level repository content currently contains `docs/` only.
-- Phase 0 planning documents exist under `docs/phase-0/`.
-- No `.github/workflows` directory is present.
-- Latest checked GitHub Actions workflow run count: zero.
-- GitHub reports `main` as unprotected.
-- No package manifests, lockfiles, source code, tests or migrations are present.
+- Branch: `feat/phase-1-foundation`
+- Pull request: https://github.com/gaje9dra/moniter/pull/1
+- Earlier failing workflow for root-cause evidence: https://github.com/gaje9dra/moniter/actions/runs/40158587979
 
-## Decision
+## Mandatory CI rule
 
-Do not mark Phase 1 complete. Do not claim any build/test/CI result. Do not start Phase 2. The correct next action is to resolve Phase 0's outstanding approval and bootstrap/CI prerequisites, then restart Phase 1.1 against the approved actual stack.
+DO NOT STOP WORKING BEFORE ALL REQUIRED CI CHECKS ARE GREEN AND ALL IMPLEMENTATION-RELATED ERRORS, FAILURES, AND ISSUES ARE FIXED. Keep investigating, implementing fixes, and rerunning the relevant checks until CI is green. Do not skip tests, weaken tests, suppress errors, bypass required checks, or claim success without actual verification.
+
+## Sign-off decision
+
+Do not mark Phase 1 complete while any required workflow fails or has not run. Do not start Phase 2 or implement later monitoring functions in this phase.
