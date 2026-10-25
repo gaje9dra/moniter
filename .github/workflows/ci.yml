@@ -1,18 +1,14 @@
 name: CI
-
 on:
   pull_request:
   push:
     branches: [main, "feat/**"]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   dashboard:
     name: Dashboard / lint, typecheck, tests, build
@@ -25,20 +21,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm install --global pnpm@10.20.0
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@10.20.0
+      - name: Verify lockfile/install
+        run: pnpm install --lockfile-only
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
-      - if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dashboard-build
-          path: apps/dashboard/.next
-          if-no-files-found: error
-          retention-days: 7
-
   dotnet-cross-platform:
     name: .NET API + agent / restore, build, tests
     runs-on: ubuntu-latest
@@ -52,7 +43,6 @@ jobs:
       - run: dotnet build Moniter.sln --no-restore --configuration Release
       - run: dotnet test Moniter.sln --no-build --configuration Release --logger "console;verbosity=normal"
       - run: dotnet list Moniter.sln package --vulnerable --include-transitive
-
   windows-agent:
     name: Windows agent / Windows build and tests
     runs-on: windows-latest
@@ -64,7 +54,6 @@ jobs:
       - run: dotnet restore tests/Moniter.Agent.Tests/Moniter.Agent.Tests.csproj
       - run: dotnet build src/Moniter.Agent/Moniter.Agent.csproj --no-restore --configuration Release
       - run: dotnet test tests/Moniter.Agent.Tests/Moniter.Agent.Tests.csproj --configuration Release --logger "console;verbosity=normal"
-
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest
