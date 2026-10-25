@@ -1,38 +1,37 @@
 # Phase 0.6 — Privacy, Data Governance and Retention
 
-**Status:** Policy design baseline. Actual retention durations and legal obligations must be approved for each deployment jurisdiction and customer.
+**Status:** Foundation baseline decided; production legal approvals are still release gates.
 
 ## Permitted purpose and notice
 
-Monitoring is for disclosed enterprise purposes on authorized company-managed endpoints under written organizational policy. Provide notice describing collection categories, purposes, access roles, retention, exclusions, and a contact/escalation channel before enrollment or monitoring activation. Obtain qualified legal/privacy review before deployment.
+Monitoring is restricted to disclosed enterprise purposes on authorized company-managed Windows endpoints, subject to approved organizational policy and applicable law. Provide notice describing collection categories, purposes, roles with access, retention, exclusions and escalation/contact channels before any future collection is enabled.
 
-## Data categories
+## Supported endpoint target
 
-| Category | Purpose | Access | Retention rule | Deletion / special handling |
-|---|---|---|---|---|
-| Device identity and health | Inventory, security and endpoint support | IT administrators; limited auditors | Defined operational period | Remove/revoke device; retain only required audit record |
-| Application transition metadata | Disclosed application-use reporting | Authorized IT/manager/analyst according to role | Configurable category-specific duration | Scheduled deletion/aggregation with auditable outcome |
-| Browser title/URL metadata | Only if approved and enabled by policy | Narrowly scoped authorized roles | Shortest justified approved period | Pre-persistence exclusion/redaction; scheduled deletion |
-| Organization/user membership | Administration and access control | Organization admins and the user as appropriate | Account/contract lifecycle and required records | Disable access and delete/anonymize as policy/law allows |
-| Monitoring policy and approvals | Prove authorized scope and configuration | Policy administrators/auditors | Policy and audit schedule | Retain necessary change history |
-| Audit logs | Accountability and incident investigation | Restricted auditor/security role | Separately approved schedule | Controlled expiry; avoid logging sensitive content |
-| Exports | Approved reporting | Creator and authorized roles only | Short expiry; secure storage | Expiring download access and scheduled object deletion |
-| Optional screen viewing | Not in baseline; separate authorization required | Explicitly approved operators | Disabled by default; shortest approved duration | No recording by default; if later approved, strict expiry and audited deletion |
+Initial intended target is authorized company-managed Windows 10 and Windows 11 endpoints. Before agent distribution, verify exact supported editions/builds, the Windows lifecycle status on the intended deployment date, service/session behavior and organization fleet compatibility. Unsupported or out-of-support operating systems must not be silently treated as supported.
 
-Specific durations must be configured and documented before live collection. This design does not silently set arbitrary retention periods.
+## Data minimization and exclusions
 
-## Access, export and employee process
+This foundation does not collect employee activity. Later activity categories must have a specified purpose and schema before they are implemented. Never collect passwords, authentication tokens, private messages, form contents, or page/screen contents as part of the baseline. Browser metadata, if separately approved later, must use sensitive-site exclusions and redaction before persistence where feasible.
 
-- Define role access for IT, HR, managers and auditors by purpose and team scope.
-- Log sensitive record access, export, policy edits and revocations.
-- Provide an employee notice and documented route for questions, access/correction requests where applicable, and escalation.
-- Require exports to be justified, minimized, access-controlled, time-limited and audited.
-- Use redaction/exclusion for sensitive sites before durable storage where feasible.
+## Provisional retention baseline
 
-## Screen-view safeguards
+Ordinary activity-event data has a provisional 90-day retention target for development and testing design only. Retention must be configurable by data category and enforced by future persistent storage/deletion jobs. No event store or deletion job is implemented in the foundation, so no activity data is currently retained by this application. Production retention duration requires jurisdiction-specific legal and organizational approval before deployment; 90 days is not a blanket legal approval.
 
-Screen viewing is excluded from the initial implementation baseline. If separately approved, require explicit role/purpose authorization, clear user/administrator visibility, short-lived sessions, visible audit events, no covert capture, no recording by default, and a reliable stop/revocation mechanism.
+## Roles and audit
 
-## Legal and governance gate
+Future access must be scoped to least-privilege roles for IT, managers, HR/analysts and auditors. Sensitive data access, exports, policy changes and device revocation must be audited. Tenant and role authorization must be enforced server-side across API calls, realtime subscriptions, exports and background jobs.
 
-Obtain counsel/privacy review for each applicable jurisdiction and employment context. Validate lawful basis, notice/consultation obligations, cross-border transfers, data subject rights, works council/employee representative requirements and incident response duties as applicable. This document is not legal advice.
+## Screen viewing
+
+Screen viewing remains optional, disabled by default and outside the initial foundation. It requires a separate design, policy authorization, visible/auditable access, user/administrator notice as appropriate, session limits and an explicit stop/revocation mechanism.
+
+## Production release gates
+
+- Counsel/privacy review for each deployment jurisdiction and employment context.
+- Confirm lawful basis, notice/consultation duties, cross-border transfer, employee rights and representative/works council requirements where applicable.
+- Approve category-specific production retention durations and deletion evidence.
+- Review monitoring purpose, browser exclusions and the exact Windows versions/editions in fleet.
+- Validate role-scoped access, audit, incident response and data deletion before enabling real collection.
+
+This document is not legal advice.
