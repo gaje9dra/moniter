@@ -1,41 +1,42 @@
 # Phase 0 — Status and Sign-off
 
 **Last updated:** 2026-10-25  
-**Overall status:** INCOMPLETE — the dashboard lockfile is currently a `PENDING` placeholder, so frozen installation and full CI are not green.
+**Overall status:** INCOMPLETE — lockfile recovery is verified, but fresh frozen-install CI and final validation remain outstanding.
 
-## Current Phase 0.7 evidence
+## Phase 0.7 — Latest evidence
 
-- Feature branch: `feat/phase-1-foundation`.
-- Latest observed head before this status correction: `a9057e532b190a8c31ce0c860e906f2ea2fd00dc`.
-- `apps/dashboard/pnpm-lock.yaml` was inspected directly and contains only `PENDING` (7 bytes; blob `ecae18482d4fba83f1708fc73f5b2d36212f9866`). This is invalid for a frozen install.
-- The approved dashboard manifest pins `pnpm@10.20.0`, Next.js `15.5.6`, React/React DOM `19.1.1`, TypeScript `5.9.3`, ESLint `9.39.1`, and Vitest `3.2.4`.
-- Workspace root configuration files `package.json`, `pnpm-workspace.yaml`, and `.npmrc` were not found in the feature-branch tree; the dashboard manifest is the only detected pnpm project manifest.
-- Prior failing CI: [run 40160966800](https://github.com/gaje9dra/moniter/actions/runs/40160966800). The dashboard frozen install fails with `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY`; .NET, Windows agent, and secret-scan jobs passed.
-- Earlier run [40159780444](https://github.com/gaje9dra/moniter/actions/runs/40159780444) passed frontend checks only after regenerating the lockfile inside CI. It is not proof of frozen installation from committed contents.
-- Recovered artifact `12586430553` contains a 140,815-byte lockfile; offline YAML parsing found one root importer, 450 package entries, and 450 snapshots, with importer versions matching the dashboard manifest. The lockfile has not been committed successfully.
-- This environment cannot resolve `github.com` for `git clone` or `registry.npmjs.org` to install pnpm; `corepack pnpm@10.20.0 --version` failed with DNS `EAI_AGAIN`. A GitHub blob-write attempt also yielded only 380 bytes rather than the full 140,815-byte file, so the truncated object was not committed.
-- Branch protection inspection returned HTTP 403 `Resource not accessible by integration`; settings remain unverified.
+- Repository: https://github.com/gaje9dra/moniter
+- Target branch: `feat/phase-1-foundation`.
+- Lockfile commit: `0d988d74ceef679c54e18d30c54462499e83ca76`.
+- Recovered lockfile: `apps/dashboard/pnpm-lock.yaml`.
+- Verified byte length: `140815`.
+- Verified SHA-256: `64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6`.
+- Successful artifact recovery, remote write, remote hash verification, and temporary recovery workflow removal: [workflow run 40162819427](https://github.com/gaje9dra/moniter/actions/runs/40162819427).
+- CI run [40162832514](https://github.com/gaje9dra/moniter/actions/runs/40162832514), associated with the lockfile commit, has conclusion `action_required` and no jobs. It is not a valid green CI result. Obtain a fresh actionable run and verify all jobs.
+- The previous `PENDING` placeholder blocker is resolved at the Git tree level. Frozen installation and frontend lint, typecheck, tests, and build still require fresh verification.
 
 ## Phase gate table
 
 | Subphase | Status | Evidence / blocker |
 |---|---|---|
-| 0.1 Repository discovery | Partial | Foundation code exists on feature branch; final tree must be revalidated after lockfile repair. |
-| 0.2 Product/privacy requirements | Documented; approval pending | Organizational authorization, employee notice, jurisdiction review and production retention remain release gates. |
-| 0.3 Technology decisions | Documented | Stack/version compatibility still needs clean CI confirmation. |
-| 0.4 API/data contracts | Partial | Health endpoints exist; PostgreSQL/EF Core business model is deferred. |
-| 0.5 Threat model | Partial | Foundation controls and secret scan exist; full production security review is pending. |
-| 0.6 Privacy/retention | Documented; production approval pending | No activity data collection or storage implemented. 90 days is provisional for development/testing only. |
-| 0.7 CI baseline | **BLOCKED** | Complete lockfile must be committed; fresh frozen-only install and all required jobs must pass. |
-| 0.8 Roadmap | Documented | Later-phase monitoring features remain out of scope. |
-| 0.9 Final validation | **NOT PASSED** | Do not sign off before green CI, review, and governance evidence. |
+| 0.1 Repository discovery | Partial | Foundation code exists; perform a final source and repository audit after CI recovery. |
+| 0.2 Product/privacy requirements | Documented; approval pending | Organizational authorization, employee notice, jurisdiction review, and production retention remain release gates. |
+| 0.3 Technology decisions | Documented | Confirm stack compatibility through a successful fresh build. |
+| 0.4 API/data contracts | Partial | Foundation health endpoints exist; database business models and later API contracts remain deferred. |
+| 0.5 Threat model | Partial | Foundation controls and secret scan exist; full security review remains pending. |
+| 0.6 Privacy/retention | Documented; production approval pending | No employee activity collection/storage is implemented; 90 days remains provisional for development/testing only. |
+| 0.7 CI baseline | **IN PROGRESS** | Full lockfile transfer verified; fresh frozen installation and all required CI jobs must pass. |
+| 0.8 Roadmap | Documented | Later-phase monitoring functionality remains out of scope. |
+| 0.9 Final validation | **NOT PASSED** | Requires green CI, governance evidence, and final consistency review. |
 
 ## Required next actions
 
-1. Commit the full artifact `12586430553` as `apps/dashboard/pnpm-lock.yaml` without truncation, preserving pinned package versions.
-2. From a clean checkout, run `pnpm install --frozen-lockfile` using pnpm `10.20.0`; verify the lockfile hash remains unchanged.
-3. Run lint, typecheck, Vitest and production build, followed by all Linux and Windows CI jobs.
-4. Update `docs/phase-0/testing-and-ci.md` and both PR descriptions/comments with exact run URL, job conclusions, test counts and commit hash.
-5. Verify branch protection/required checks manually in GitHub Settings → Rules/Branches because the connected integration cannot read that endpoint.
+1. Run pnpm `10.20.0` frozen installation from a clean checkout of the repaired branch.
+2. Verify the lockfile hash remains unchanged after installation.
+3. Execute dashboard lint, typecheck, tests, and production build.
+4. Obtain a fresh full CI run with all required Linux and Windows jobs successful.
+5. Update both pull requests with the new commit and actual CI evidence.
+6. Manually verify branch protection and required checks in GitHub Settings → Rules/Branches.
+7. Resolve the remaining privacy/legal approvals before production use.
 
-**Sign-off: Phase 0 incomplete. Phase 1 remains gated. Do not start Phase 2 or claim a green CI result.**
+**Sign-off:** Phase 0 is incomplete. Do not merge either draft pull request or begin Phase 2 until required CI and governance gates are satisfied.
