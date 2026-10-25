@@ -34,3 +34,9 @@ Every phase requires its own prompt, implementation, tests and verified CI gates
 > DO NOT STOP WORKING BEFORE ALL REQUIRED CI CHECKS ARE GREEN AND ALL IMPLEMENTATION-RELATED ERRORS, FAILURES, AND ISSUES ARE FIXED. Keep investigating, implementing fixes, and rerunning the relevant checks until CI is green. Do not skip tests, weaken tests, suppress errors, bypass required checks, or claim success without actual verification.
 
 If an external service, credential or infrastructure blocker prevents a required check, provide reproducible evidence and the exact action required to unblock it. Never fabricate a green result.
+
+## Phase 3 release decision — 2026-10-25
+
+Phase 3 authentication and organization authorization code was merged in PR #4 at merge commit `4ff27603c76f0fbc3a6442ae8857900fde8661f8`. Merge is not equivalent to release approval: the identity provider was not selected/provisioned, real token and provider-specific MFA behavior were not verified, no independent PR reviews were recorded, `main` was reported unprotected with required-check enforcement disabled, and post-merge CI on the merge SHA was not found in the available workflow lookup.
+
+**Phase 4 entry gate remains closed** until the Phase 3 release blockers in `docs/phase-3/phase-status.md` are evidenced as resolved. Do not begin Phase 4 implementation merely because PR #4 is merged or its pre-merge CI passed.
