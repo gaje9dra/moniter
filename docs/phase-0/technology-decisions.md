@@ -1,23 +1,25 @@
 # Phase 0.3 — Technology Decisions
 
-**Decision status:** Approved foundation baseline for Phase 1 as of 2026-10-25. Compatibility and build verification are delegated to CI and must be evidenced before sign-off.
+**Decision status:** Approved foundation baseline for Phase 0/Phase 1. Final version compatibility is enforced by pinned direct dependencies, committed lockfiles, and CI. Production acceptance remains gated on jurisdictional and organizational approvals.
 
-| Area | Approved baseline | Scope notes |
+## Approved stack
+
+| Area | Approved baseline | Compatibility / scope |
 |---|---|---|
-| Dashboard | Node.js 24 LTS, pnpm 10.20.0, Next.js 15.5.6 App Router, React 19.1.1, TypeScript 5.9.3 | Exact package versions; lockfile required. UI uses accessible responsive patterns. |
-| API | ASP.NET Core Web API, C#, .NET 10 LTS, nullable reference types, built-in OpenAPI | Minimal REST endpoints in Phase 1. Business APIs are deferred. |
-| Windows agent | C#, .NET 10 Worker Service; Windows Service host when running on Windows | Foundation only: config validation, version, diagnostics and lifecycle. No activity collection. |
-| Database | PostgreSQL for future business-data persistence | No DB schema/provider/migrations added in Phase 1. |
-| Realtime | SignalR for future authenticated updates | No monitoring stream or realtime activity collection implemented in Phase 1. |
-| Tests | xUnit; Vitest for frontend unit tests; Playwright reserved for actual browser E2E once deployed UI flow exists | Do not add E2E tests that only simulate non-existent business features. |
-| CI | GitHub Actions with Linux dashboard/API checks and a Windows agent build/test job | Secret scanning and .NET vulnerability listing included. |
+| Administration dashboard | Node.js 24 LTS, pnpm 10.20.0, Next.js 15.5.6 App Router, React 19.1.1, TypeScript 5.9.3 | Exact frontend dependency versions in `apps/dashboard/package.json`; frozen lockfile installs required. Accessible responsive UI. |
+| Backend | ASP.NET Core Web API, C#, .NET 10 LTS, nullable reference types, built-in OpenAPI | `net10.0`, warnings treated as errors, health endpoints and development API description. |
+| Windows endpoint agent | C#/.NET 10 Worker Service, Windows Service integration on Windows | Configuration validation, version and diagnostics, safe startup/shutdown only; no endpoint activity collection. |
+| Database | PostgreSQL | Planned for a later phase with Entity Framework Core, reviewed versioned migrations and migration tests. Not connected by the foundation. |
+| Real-time | SignalR | Planned for authenticated, authorized live updates; no monitoring stream in the foundation. |
+| Tests | xUnit for .NET; Vitest for frontend; Playwright for browser E2E when real user flows exist | No fake monitoring flows or tests against nonexistent business features. |
+| CI and security | GitHub Actions on Linux and Windows; Gitleaks; .NET vulnerability auditing | Checks fail the workflow on errors; Windows target is built and tested on a Windows runner. |
 
-## Version policy
+## Version and upgrade policy
 
-Direct frontend dependencies are exactly pinned in `apps/dashboard/package.json`; the pnpm lockfile must be committed and CI must use `pnpm install --frozen-lockfile`. .NET targets `net10.0`; package references use explicit versions and the SDK baseline is declared in `global.json`. CI installs the latest available .NET 10 feature-band SDK, so the exact patch installed by hosted runners is reported by workflow logs. Review dependency upgrades through pull requests.
+Direct frontend packages are exactly pinned; pnpm 10.20.0 and Node.js 24 are configured in CI. `apps/dashboard/pnpm-lock.yaml` must be a complete lockfile generated with pnpm 10.20.0 and accepted only with `pnpm install --frozen-lockfile`. .NET projects target `net10.0` and package references are explicit. `global.json` pins SDK 10.0.100 with `latestFeature` roll-forward; the actual SDK patch used by hosted CI must be read from job logs. Review dependency upgrades through pull requests and rerun all checks.
 
-## Deferred decisions
+## Deferred decisions and gates
 
-OIDC provider, PostgreSQL hosting, EF Core data model/migrations, authenticated SignalR authorization, retention enforcement in a persistent event store, agent code signing, deployment infrastructure, and jurisdiction-specific production retention remain future phase/release gates. The foundation must not imply they are implemented.
+OIDC identity provider, PostgreSQL hosting, EF Core schema/migrations, authenticated SignalR, production agent signing/distribution, data retention enforcement, and deployment infrastructure are not implemented by the foundation. Windows 10/11 editions/builds and lifecycle status must be confirmed against the target fleet before releases. Jurisdiction-specific legal review, employee notice, production retention periods, and organizational authorization are release gates.
 
-The approved baseline is a foundation choice, not a production readiness statement. Revisit only for a concrete compatibility, security, maintenance or operational blocker documented with evidence.
+These decisions approve the foundation technology choices; they do not imply product or production readiness.
