@@ -37,10 +37,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f artifact/pnpm-lock.yaml
-          actual_size="$(wc -c < artifact/pnpm-lock.yaml | tr -d ' ')"
-          test "$actual_size" = "140815"
-          printf '%s  %s\n' '64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6' 'artifact/pnpm-lock.yaml' | sha256sum --check
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p = Path("artifact/pnpm-lock.yaml")
+          data = p.read_bytes()
+          digest = hashlib.sha256(data).hexdigest()
+          print(f"Recovered file: {p}")
+          print(f"Byte length: {len(data)}")
+          print(f"SHA-256: {digest}")
+          expected_size = 140815
+          expected_hash = "64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6"
+          if len(data) != expected_size:
+              raise SystemExit(f"Expected {expected_size} bytes, got {len(data)}")
+          if digest != expected_hash:
+              raise SystemExit(f"SHA-256 mismatch: expected {expected_hash}, got {digest}")
+          if b"lockfileVersion: '9.0'" not in data or b"importers:" not in data:
+              raise SystemExit("Lockfile structure marker missing")
+          PY
 
       - name: Check target branch head and commit verified lockfile
         shell: bash
@@ -60,8 +74,17 @@ jobs:
           git switch --detach "$actual_head"
           mkdir -p apps/dashboard
           cp /tmp/pnpm-lock.yaml apps/dashboard/pnpm-lock.yaml
-          test "$(wc -c < apps/dashboard/pnpm-lock.yaml | tr -d ' ')" = "140815"
-          printf '%s  %s\n' '64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6' 'apps/dashboard/pnpm-lock.yaml' | sha256sum --check
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p = Path("apps/dashboard/pnpm-lock.yaml")
+          data = p.read_bytes()
+          digest = hashlib.sha256(data).hexdigest()
+          print(f"Staged lockfile bytes: {len(data)}")
+          print(f"Staged lockfile SHA-256: {digest}")
+          assert len(data) == 140815
+          assert digest == "64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6"
+          PY
 
           git add apps/dashboard/pnpm-lock.yaml
           git config user.name "github-actions[bot]"
@@ -81,8 +104,16 @@ jobs:
           echo "Remote branch head: $remote_head"
           echo "Remote lockfile blob: $remote_blob"
           git show FETCH_HEAD:apps/dashboard/pnpm-lock.yaml > /tmp/remote-pnpm-lock.yaml
-          test "$(wc -c < /tmp/remote-pnpm-lock.yaml | tr -d ' ')" = "140815"
-          printf '%s  %s\n' '64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6' '/tmp/remote-pnpm-lock.yaml' | sha256sum --check
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          data = Path("/tmp/remote-pnpm-lock.yaml").read_bytes()
+          digest = hashlib.sha256(data).hexdigest()
+          print(f"Remote lockfile bytes: {len(data)}")
+          print(f"Remote lockfile SHA-256: {digest}")
+          assert len(data) == 140815
+          assert digest == "64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6"
+          PY
 
       - name: Remove temporary recovery workflow from recovery branch
         shell: bash
