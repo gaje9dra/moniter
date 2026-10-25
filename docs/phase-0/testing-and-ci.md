@@ -1,28 +1,34 @@
 # Phase 0.7 — Test Strategy and CI Baseline
 
-## Original baseline
-Before the foundation work, the repository contained documentation only. There were no application manifests, source code, tests, or GitHub Actions workflows, so a runnable baseline could not be measured.
-
 ## Current CI workflow
-Workflow: [CI](../../.github/workflows/ci.yml). Latest verified successful run: https://github.com/gaje9dra/moniter/actions/runs/40159780444 on commit `3383108ad72c6917d0ccbc686a9c28aacff426f2`.
+Workflow: [CI](../../.github/workflows/ci.yml). The intended workflow runs on pull requests, pushes to `main` or `feat/**`, and manual dispatch.
 
-The workflow includes four jobs:
-- **Dashboard:** Node 24, pnpm 10.20.0, dependency resolution/frozen install, ESLint, TypeScript typecheck, Vitest tests, and Next.js production build.
-- **.NET:** .NET 10 restore, formatting verification, Release build, xUnit test command, and vulnerability listing for each of the four projects.
-- **Windows agent:** Windows runner restores, builds and tests the agent.
-- **Secret scan:** Gitleaks scans checked-out files using v8.24.3.
+Jobs include dashboard frozen install/lint/typecheck/Vitest/Next build; .NET format/build/xUnit/vulnerability checks; Windows agent build/tests on a Windows runner; and Gitleaks secret scanning.
 
-## Observed results
-Run `40159780444` concluded **success**. All four jobs completed successfully:
-- Dashboard / lint, typecheck, tests, build — success.
-- .NET API + agent / restore, build, tests — success.
-- Windows agent / Windows build and tests — success.
-- Secret scan — success.
+## Current blocker
 
-Earlier failed runs are retained in GitHub Actions history and were used to fix pnpm setup, lockfile resolution, C# formatting, xUnit imports, missing OpenAPI dependency, vulnerable OpenAPI dependency, audit asset discovery, and shallow-history secret scanning. Do not treat cancelled historical runs as passing.
+The actual feature branch contains `apps/dashboard/pnpm-lock.yaml` with the literal 7-byte content `PENDING`. A frozen install cannot succeed with this file. CI run [40160966800](https://github.com/gaje9dra/moniter/actions/runs/40160966800) failed the dashboard dependency install with `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY`; .NET API/agent, Windows agent, and secret-scan jobs passed.
 
-## Dependency lockfile caveat
-The dashboard CI currently resolves an incomplete checked-in lockfile during the run, validates the generated lockfile with a second frozen install, and uploads it as an artifact. The artifact was recovered, but its full content has **not yet been successfully committed** as the complete `apps/dashboard/pnpm-lock.yaml`. This is a remaining reproducibility blocker: a successful workflow does not prove that the committed lockfile alone is complete, because the first install updates it in the runner. Update CI to use frozen-lockfile only after the generated file is correctly committed.
+The dashboard manifest declares `packageManager: pnpm@10.20.0`, Next.js `15.5.6`, React and React DOM `19.1.1`, TypeScript `5.9.3`, ESLint `9.39.1`, and Vitest `3.2.4`. A recovered artifact from prior run `40159780444` (artifact ID `12586430553`) contains a 140,815-byte lockfile. Offline YAML inspection reports one root importer, 450 package entries and 450 snapshots. Its direct importer declarations match the manifest, but it has not yet been committed correctly.
 
-## Sign-off gate
-Although the latest observed CI run is green, Phase 0 and Phase 1 cannot be signed off until the full generated pnpm lockfile is committed, a fresh workflow passes against that committed lockfile without resolving/modifying it, test counts are confirmed, and the final PR/branch configuration is reviewed.
+The prior run `40159780444` passed only after running `pnpm install --no-frozen-lockfile` inside the CI runner and uploading the generated artifact. That is not acceptable evidence of reproducibility from the committed lockfile. CI must retain `pnpm install --frozen-lockfile` as the only dependency installation path.
+
+## Execution and transfer limitations encountered
+
+- `git clone https://github.com/gaje9dra/moniter.git` fails because this environment cannot resolve `github.com`.
+- `corepack pnpm@10.20.0 --version` fails because this environment cannot resolve `registry.npmjs.org` (`EAI_AGAIN`).
+- The GitHub connector's blob-write attempt returned a 380-byte blob for the intended 140,815-byte lockfile, so the incomplete object was not used. The file has not been committed; do not infer successful transfer from artifact download alone.
+
+## Acceptance checklist
+
+- [ ] Commit the full generated `pnpm-lock.yaml` without truncation or placeholders.
+- [ ] From a clean checkout, use pnpm 10.20.0 and run `pnpm install --frozen-lockfile` successfully.
+- [ ] Verify the lockfile hash is unchanged after the install; repeat in a clean environment where possible.
+- [ ] Run frontend lint, typecheck, Vitest and production build against the frozen install.
+- [ ] Verify a fresh run has all dashboard, .NET, Windows and secret-scanning jobs green.
+- [ ] Record actual test counts and the exact commit/run URLs.
+- [ ] Keep Phase 0.9 incomplete until CI and repository governance evidence are verified.
+
+## Governance
+
+Branch-protection inspection returned HTTP 403 (`Resource not accessible by integration`); rules and required checks remain unverified. Manually inspect GitHub Settings → Rules/Branches. Privacy/legal review, employee notice, supported Windows builds and production retention approval are separate release gates.
