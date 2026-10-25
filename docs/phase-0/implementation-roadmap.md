@@ -1,28 +1,40 @@
 # Phase 0.8 — Implementation Roadmap
 
-This roadmap is dependency-aware and remains planning only. Each phase requires a separate approved prompt and a green required CI gate before being declared complete. Do not start Phase 1 during Phase 0.
+## Approved technology baseline
 
-| Phase | Objective / key deliverables | Dependencies and gates |
-|---|---|---|
-| 1. Foundation and development environment | Choose stack, app skeleton, config validation, coding standards, CI, local/test environment | Product/architecture approval; clean install, lint/typecheck/tests/build green |
-| 2. Multi-tenant backend and database | Tenant-aware schema, migrations, repository/service boundaries | Foundation; migration and isolation tests |
-| 3. Authentication and authorization | Identity integration, membership model, RBAC, privileged MFA | Tenant model; role matrix and abuse tests |
-| 4. Windows endpoint agent | Managed install, device identity, health, policy fetch, signed build | Auth/API contracts; lifecycle and signature tests |
-| 5. Device inventory and health | Enrollment, revocation, heartbeat, version/status dashboard | Agent + tenant/RBAC; revoked identity tests |
-| 6. Application activity | Foreground application transitions, event ingestion, duration/idle rules | Policy, agent, event contracts; event correctness/privacy tests |
-| 7. Browser activity | Explicit supported integration and redaction/exclusion | Privacy approval; non-persistence exclusion tests |
-| 8. Live dashboard | Tenant-scoped realtime, freshness and reconnect handling | Durable event pipeline; E2E/reconnect tests |
-| 9. Optional authorized screen viewing | Separate opt-in design only after authorization and privacy review | Security/privacy sign-off, visible access and audit gates; can remain out of scope |
-| 10. Productivity analytics | Aggregates and approved definitions | Correct event data; fairness/interpretation review and tests |
-| 11. Alerts and policies | Policy versions, alerts and delivery controls | Tenant roles, policy model; audit and retry tests |
-| 12. Historical search and reporting | Query, filters, exports and optional PDF | Data retention, permissions; export abuse tests |
-| 13. Security hardening | Threat remediation, abuse testing, secure defaults | Prior functional paths; security gates pass |
-| 14. Performance and scalability | Load model, indexes, queue/backpressure tuning | Baseline workloads/SLOs; repeatable benchmarks |
-| 15. Enterprise deployment | Customer provisioning, rollout, backups, recovery, operational guide | Security, capacity, legal and support readiness |
-| 16. End-to-end release verification | Production-like acceptance, rollback, runbooks and evidence | All prior gates; documented release sign-off |
+- Dashboard: Node.js 24 LTS, pnpm 10.20.0, Next.js 15.5.6 App Router, React 19.1.1 and TypeScript 5.9.3.
+- API and agent: C# / .NET 10 LTS; ASP.NET Core Web API and Worker Service hosted as a Windows Service on Windows.
+- Future database: PostgreSQL with Entity Framework Core and reviewed, versioned migrations.
+- Future realtime: SignalR with authentication and server-enforced tenant/role-filtered subscriptions.
+- Tests/CI: Vitest for frontend unit tests, xUnit for .NET tests, GitHub Actions on Linux and Windows, dependency auditing and Gitleaks.
 
-Every future phase prompt must include the following rule verbatim:
+## Phase sequence and gates
 
-> DO NOT STOP WORKING BEFORE ALL REQUIRED CI CHECKS ARE GREEN AND ALL IMPLEMENTATION-RELATED ERRORS, FAILURES, AND ISSUES ARE FIXED. Keep investigating, implementing fixes, and rerunning the relevant checks until CI is green. Do not skip tests, weaken tests, suppress errors, bypass required checks, or claim success without actual verification.
+1. **Foundation and development setup:** runnable dashboard/API/agent foundation, validated configuration, static checks, unit tests and verified CI.
+2. **Multi-tenant persistence:** PostgreSQL/EF Core schema, reviewed migrations, repositories and isolation tests.
+3. **Authentication/authorization:** identity integration, membership, role matrix and privileged MFA.
+4. **Windows agent lifecycle:** managed install, device identity, secure credentials and signed builds.
+5. **Device inventory/health:** authorized enrollment/revocation, heartbeat, version and status.
+6. **Application activity:** policy-enabled foreground application metadata and duration/idle rules, only after authorization and privacy review.
+7. **Browser metadata:** approved supported-browser integration, sensitive-site exclusions and redaction; no passwords, tokens, private messages or form contents.
+8. **Live dashboard:** authenticated SignalR updates with freshness and reconnect handling.
+9. **Optional screen viewing:** separate approval/privacy/security gate, disabled by default and may remain out of scope.
+10. **Productivity analytics:** approved aggregate definitions and interpretability/fairness review.
+11. **Alerts and policies:** versioned policies, audit and delivery retry.
+12. **Historical search/reporting:** authorized query, filtering and exports.
+13. **Security hardening:** threat remediation and abuse testing.
+14. **Performance/scalability:** measured workloads, indexes, backpressure and benchmarks.
+15. **Enterprise deployment:** rollout, backup/restore, operations and support.
+16. **End-to-end release verification:** production-like acceptance, rollback and explicit release sign-off.
 
-If external infrastructure prevents a check from running, investigate it fully and document exact evidence and the required unblock action; never fabricate green results.
+Each phase requires its own scope, implementation, tests and verified CI. No later-phase monitoring behavior is part of this foundation.
+
+## Mandatory continuous-implementation and CI rule
+
+DO NOT STOP WORKING BEFORE ALL REQUIRED CI CHECKS ARE GREEN AND ALL IMPLEMENTATION-RELATED ERRORS, FAILURES, AND ISSUES ARE FIXED. Keep investigating, implementing fixes, and rerunning the relevant checks until CI is green. Do not skip tests, weaken tests, suppress errors, bypass required checks, or claim success without actual verification.
+
+If an unrelated pre-existing failure, unavailable external service, missing credential, or infrastructure problem prevents a green result, investigate it fully, fix it when within authorized scope, and provide exact evidence for any remaining external blocker. Never fabricate green CI results or conceal unresolved failures. Do not mark the phase complete while required acceptance criteria remain unmet.
+
+## Release gates
+
+The initial development environment must not require production credentials or real employee devices. Jurisdiction-specific legal review, employee notice, organizational authorization, exact supported Windows editions/builds and production retention-duration approval remain hard release gates.

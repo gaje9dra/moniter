@@ -1,38 +1,32 @@
 # Phase 0.7 — Test Strategy and CI Baseline
 
-## Remote baseline evidence (2026-10-25)
+## CI workflow
 
-- GitHub repository: exists, public, default branch metadata is `main`.
-- Contents endpoint: 404, “This repository is empty.”
-- Commits endpoint: 409, “Git Repository is empty.”
-- Branches endpoint: empty array.
-- Actions runs endpoint: `total_count = 0`.
-- No project files, package manifests, workflows, tests or migration files are available; lint/typecheck/test/build/migration commands cannot be executed against the empty remote repository.
-- No successful CI result is claimed. Required checks and branch protection have not been verified from repository settings.
+Workflow: [CI](../../.github/workflows/ci.yml). The workflow is expected to run on pull requests and pushes to `main` or `feat/**`.
 
-## Planned test layers
+Jobs:
+- **Dashboard:** Node.js 24, pinned pnpm 10.20.0, frozen dependency installation, ESLint, TypeScript typecheck, Vitest, and Next.js production build.
+- **.NET API and agent:** .NET 10 restore, formatting verification, Release build, xUnit tests, and vulnerability listing for the API, agent and test projects.
+- **Windows agent:** Windows runner restores, builds and tests the agent.
+- **Secret scan:** Gitleaks scans checked-out files.
 
-1. **Unit:** event validation, timestamps/clock drift, usage duration, redaction, policy evaluation, freshness thresholds, role policy.
-2. **Integration:** database constraints, atomic enrollment, credentials/revocation, event ingestion/deduplication, retention deletions, exports/audit.
-3. **Security:** tenant boundary matrix for every route/job/export/stream; RBAC; replay; rate limits; sensitive-domain exclusion; secret/dep scanning.
-4. **Agent:** supported Windows versions, visible installation/uninstallation, secure credential storage, offline queue limits, policy changes, signed update verification.
-5. **End-to-end:** authorized enrollment through actual endpoint event to correct authorized dashboard, revoke and ensure event access stops, verify reconnection/backfill and stale indicators.
-6. **Reliability:** API/database/realtime outages, queue overflow, duplicate/out-of-order events, clock skew, restart/recovery.
-7. **Performance:** measure ingestion, dashboard freshness and history queries under an agreed number of active devices and events. Set explicit SLOs before production.
+## Observed results and required correction
 
-## Proposed baseline commands
+Run [40159780444](https://github.com/gaje9dra/moniter/actions/runs/40159780444) completed successfully on 2026-10-25. The dashboard job succeeded only after running `pnpm install --no-frozen-lockfile`, validating a second frozen install and uploading the generated lockfile as an artifact. That run does **not** prove that the committed lockfile alone is reproducible.
 
-Once the stack is selected, document exact commands in repository scripts and CI. Common gate categories: formatting/lint, type or compiler checks, unit tests, integration tests against a disposable test database, migration validation, production build/package, dependency audit, secret scan, and agent release signature verification. Commands here are categories only, not claims that commands have run.
+Run [40160244523](https://github.com/gaje9dra/moniter/actions/runs/40160244523) completed with failure on 2026-10-25. The dashboard failed at `pnpm install --frozen-lockfile`; the checked-in lockfile was incomplete. The .NET API/agent job, Windows-agent job, and secret scan succeeded. The failed dashboard install prevented lint, typecheck, frontend tests and build from running in that attempt.
 
-## CI policy
+The generated full lockfile was downloaded from run 40159780444 for recovery. A fresh workflow is required after that complete lockfile is committed and the CI step no longer mutates/regenerates it.
 
-- Run required checks on pull requests and protected release branches.
-- Require green status for all applicable checks before merge/release.
-- Never skip tests, weaken assertions, suppress errors, or report a passing status without verified result.
-- Distinguish code-caused failures from unavailable services/credentials/infrastructure and attach reproducible evidence.
-- Test migration from a fresh database and supported previous schema.
-- Preserve logs/artifacts without secrets or sensitive endpoint activity.
+## Acceptance requirements
 
-## Completion state
+- CI must use `pnpm install --frozen-lockfile` as the only dashboard install path.
+- CI must fail on any installation, lint, typecheck, test, build, .NET, Windows-agent, vulnerability-audit or secret-scan failure.
+- No credentials or real endpoint devices are required for default checks.
+- Windows-specific build and test results must originate from a Windows runner.
+- Report actual test counts from job logs where accessible; do not infer counts from a green job summary.
+- Do not call the baseline complete while a required check is pending, failed, skipped due to prerequisite failure, or not available for verification.
 
-Baseline is **blocked**, not green, because there is no initial commit or workflow. Once code is committed, establish a real baseline and iteratively fix implementation-related failures.
+## Governance note
+
+Branch-protection inspection returned HTTP 403 ("Resource not accessible by integration"). Required checks/reviews settings are unverified through the current connection; repository administrators must inspect GitHub Settings → Rules/Branches directly.

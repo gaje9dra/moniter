@@ -1,40 +1,40 @@
 # Phase 0 — Status and Sign-off
 
 **Last updated:** 2026-10-25  
-**Overall status:** INCOMPLETE — planning documents exist, but implementation audit and CI validation remain blocked.
+**Overall status:** INCOMPLETE — the application foundation exists on the foundation feature branch, but the current frozen pnpm lockfile install fails and the required all-green CI gate is unmet.
 
 | Subphase | Status | Evidence / blocker |
 |---|---|---|
-| 0.1 Repository discovery | Partial; blocked for source audit | Repository currently contains Phase 0/Phase 1 documentation only; no application source or manifests |
-| 0.2 Product requirements | Draft created | Stakeholder validation and jurisdiction-specific privacy/legal review remain |
-| 0.3 Technical architecture | Proposed documents created | Technology choices remain provisional; no stack has been approved |
-| 0.4 Data model/API design | Proposed documents created | Logical contracts require review before implementation |
-| 0.5 Threat model/security design | Initial design documents created | Must be tested against actual code and environment |
-| 0.6 Privacy/retention | Draft created | Specific retention periods and applicable legal requirements need approval |
-| 0.7 Test strategy/CI baseline | Blocked | No application code, package manifests, or CI workflows; checks cannot run |
-| 0.8 Roadmap/phase gates | Draft created | Depends on architecture and policy approvals |
-| 0.9 Final validation | Not passed | No runnable application checks; required criteria remain unmet |
+| 0.1 Repository discovery | Implemented on feature branch | Dashboard, ASP.NET Core API, .NET agent, test projects, solution and CI exist on `feat/phase-1-foundation`; `main` remains documentation-only until a reviewed PR is merged. |
+| 0.2 Product requirements | Foundation baseline documented | Organizational authorization and appropriate notice are mandatory; legal validation for each deployment jurisdiction remains open. |
+| 0.3 Technical architecture | Foundation stack documented/approved | See `technology-decisions.md`; a fresh complete CI run remains required. |
+| 0.4 Data model/API design | Partial | Health/service API exists. PostgreSQL/EF schema and business contracts remain deferred. |
+| 0.5 Threat model/security design | Foundation controls implemented; full review pending | Correlation IDs, safe problem responses, structured logging and secret scanning exist; complete threat review remains open. |
+| 0.6 Privacy/retention | Baseline documented; production approval pending | No activity collection or persistence exists. 90-day retention is a provisional development/test design target; production duration and legal approval are unresolved. |
+| 0.7 Test strategy/CI | Partial; required gate failed | Run [40160862824](https://github.com/gaje9dra/moniter/actions/runs/40160862824): .NET, Windows-agent and secret-scan jobs succeeded; dashboard failed at frozen install with `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY`. |
+| 0.8 Roadmap/phase gates | Updated | Later-phase monitoring features remain out of scope. |
+| 0.9 Final validation | **NOT PASSED** | Do not sign off until the complete pnpm lockfile is correctly committed and a fresh frozen-only CI run passes, branch governance is verified, and release gates are reviewed. |
 
-## Verified remote facts
+## Verified repository evidence
 
-- Repository: https://github.com/gaje9dra/moniter
-- Default branch: `main`
-- Top-level repository contents currently include `docs/` only.
-- Phase 0 documents exist under `docs/phase-0/`.
-- Phase 1 prerequisite review exists under `docs/phase-1/`; it records that Phase 1 is blocked at subphase 1.1.
-- `.github/workflows` does not exist.
-- Latest checked GitHub Actions workflow run count: zero.
-- GitHub reports `main` as unprotected.
-- No application source, package manifests, lockfiles, tests, migrations, or build configuration were found.
+- Repository: https://github.com/gaje9dra/moniter; default branch `main`.
+- Current `main` baseline observed: `c9bac7a934f059040c1ba4e32bba49633bc435f7`.
+- Foundation PR: https://github.com/gaje9dra/moniter/pull/1 (draft, unmerged).
+- Status/evidence follow-up PR: https://github.com/gaje9dra/moniter/pull/2 (draft, unmerged).
+- Latest observed CI for foundation head: https://github.com/gaje9dra/moniter/actions/runs/40160966800. Three jobs passed; dashboard frozen dependency install failed.
+- Failed step diagnostic: `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY: Broken lockfile: no entry for 'next@15.5.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)' in pnpm-lock.yaml`.
+- Previous run [40159780444](https://github.com/gaje9dra/moniter/actions/runs/40159780444) had green jobs only after the workflow regenerated the lockfile in the runner. The committed lockfile remained incomplete, so that is not acceptable reproducibility evidence.
+- Artifact for recovery: workflow run `40159780444`, artifact ID `12586430553`, file `pnpm-lock.yaml` (generated by pnpm 10.20.0; extracted size 140,815 bytes).
+- Branch protection inspection returned HTTP 403 `Resource not accessible by integration`; configuration is **unverified**, not assumed enabled or disabled.
 
 ## Outstanding blockers
 
-1. No application implementation or approved technology stack exists.
-2. No CI workflows or automated checks exist.
-3. Main branch protection and required-check enforcement are not enabled/verified.
-4. Customer deployment constraints, retention durations, and privacy/legal approvals are outstanding.
-5. Proposed architecture, data model, and API contracts require stakeholder review and later validation against real code.
+1. The full generated pnpm lockfile has not been reliably committed. The contents mutation call limits and unavailable direct GitHub DNS from the working container blocked recovery via the current connection.
+2. A fresh all-green run using frozen-only install is required. Current result is failure, not green.
+3. Branch protection and required checks/reviews need manual verification in GitHub Settings → Rules/Branches because the connected integration cannot read the protection endpoint.
+4. Jurisdiction-specific privacy/legal review, employee notice, organizational approval, production retention duration, and supported Windows editions/builds remain release gates.
+5. PostgreSQL/EF migrations, authentication/authorization, SignalR, signed agent packages and deployment infrastructure are deferred.
 
 ## Sign-off decision
 
-**Phase 0 is not complete. Phase 1 must remain blocked until these prerequisites are resolved.** The documents provide a planning baseline, but do not constitute a verified implementation or green CI. Re-run repository discovery and all applicable CI checks after an approved stack and initial implementation are committed.
+**Phase 0 remains incomplete; Phase 1 remains gated.** Do not start Phase 2 or implement monitoring collection. Required intervention: commit the full generated lockfile artifact, rerun CI without lockfile mutation, inspect branch governance and resolve release approvals. No claim of production readiness, privacy approval, CI green status, or branch protection is made.
