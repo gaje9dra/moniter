@@ -1,25 +1,28 @@
 # Phase 0.7 — Test Strategy and CI Baseline
 
-## Baseline before foundation implementation
+## Original baseline
+Before the foundation work, the repository contained documentation only. There were no application manifests, source code, tests, or GitHub Actions workflows, so a runnable baseline could not be measured.
 
-The original repository had planning documents only and no runnable project or CI workflow.
+## Current CI workflow
+Workflow: [CI](../../.github/workflows/ci.yml). Latest verified successful run: https://github.com/gaje9dra/moniter/actions/runs/40159780444 on commit `3383108ad72c6917d0ccbc686a9c28aacff426f2`.
 
-## Current workflow
+The workflow includes four jobs:
+- **Dashboard:** Node 24, pnpm 10.20.0, dependency resolution/frozen install, ESLint, TypeScript typecheck, Vitest tests, and Next.js production build.
+- **.NET:** .NET 10 restore, formatting verification, Release build, xUnit test command, and vulnerability listing for each of the four projects.
+- **Windows agent:** Windows runner restores, builds and tests the agent.
+- **Secret scan:** Gitleaks scans checked-out files using v8.24.3.
 
-`.github/workflows/ci.yml` has four jobs:
-- Dashboard: Node 24, pinned pnpm 10.20.0, dependency resolution and a frozen-lockfile verification, ESLint, TypeScript typecheck, Vitest, Next.js build.
-- .NET Linux: .NET 10 restore, formatting verification, Release build, xUnit tests and vulnerable dependency listing.
-- Windows agent: Windows runner restore, build and xUnit tests.
-- Secret scan: Gitleaks scans checked-out working-tree files, avoiding the shallow history range issue seen in the first iteration.
+## Observed results
+Run `40159780444` concluded **success**. All four jobs completed successfully:
+- Dashboard / lint, typecheck, tests, build — success.
+- .NET API + agent / restore, build, tests — success.
+- Windows agent / Windows build and tests — success.
+- Secret scan — success.
 
-## Actual CI evidence
+Earlier failed runs are retained in GitHub Actions history and were used to fix pnpm setup, lockfile resolution, C# formatting, xUnit imports, missing OpenAPI dependency, vulnerable OpenAPI dependency, audit asset discovery, and shallow-history secret scanning. Do not treat cancelled historical runs as passing.
 
-- Initial run: https://github.com/gaje9dra/moniter/actions/runs/40158587979 — dashboard setup failed because pnpm was not installed before setup-node's pnpm cache; .NET formatter failed; Windows restore and secret scan did not complete successfully.
-- Run: https://github.com/gaje9dra/moniter/actions/runs/40158715836 — dashboard frozen install caught incomplete placeholder lockfile; .NET format caught whitespace problems in API tests; Windows restore was on a commit before removal of an invalid package; Gitleaks failed on shallow Git history.
-- Run: https://github.com/gaje9dra/moniter/actions/runs/40158782374 — secret scan succeeded (“no leaks found”); dashboard frozen install and lint/typecheck/unit tests succeeded after the workflow resolves the lockfile on runner; dashboard build, .NET formatting/build/test, and Windows job were still running at last inspection.
+## Dependency lockfile caveat
+The dashboard CI currently resolves an incomplete checked-in lockfile during the run, validates the generated lockfile with a second frozen install, and uploads it as an artifact. The artifact was recovered, but its full content has **not yet been successfully committed** as the complete `apps/dashboard/pnpm-lock.yaml`. This is a remaining reproducibility blocker: a successful workflow does not prove that the committed lockfile alone is complete, because the first install updates it in the runner. Update CI to use frozen-lockfile only after the generated file is correctly committed.
 
-The current lockfile is being resolved during CI because direct execution/package resolution from the repository-writing environment is unavailable. A complete generated lockfile still needs to be committed to the branch to fully satisfy the committed lockfile requirement. Do not call the current lockfile artifact a fully verified committed dependency lockfile until that is done.
-
-## Acceptance gate
-
-A fresh workflow run must finish with all jobs successful. Check cancellations are not passes. Do not mark Phase 0 or Phase 1 complete until the current final commit has green test/build/security results and the generated lockfile has been committed.
+## Sign-off gate
+Although the latest observed CI run is green, Phase 0 and Phase 1 cannot be signed off until the full generated pnpm lockfile is committed, a fresh workflow passes against that committed lockfile without resolving/modifying it, test counts are confirmed, and the final PR/branch configuration is reviewed.
