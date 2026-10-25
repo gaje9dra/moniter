@@ -1,0 +1,28 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moniter.Api", "src\Moniter.Api\Moniter.Api.csproj", "{3C2A4BB4-8D9E-4ED3-96EE-E83EA0DF1181}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moniter.Agent", "src\Moniter.Agent\Moniter.Agent.csproj", "{A3C629E5-F18E-4D74-8DAB-4B3B8B46C275}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moniter.Api.Tests", "tests\Moniter.Api.Tests\Moniter.Api.Tests.csproj", "{E638C45E-2EAB-4802-BDE3-3C3FDC9B8B72}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moniter.Agent.Tests", "tests\Moniter.Agent.Tests\Moniter.Agent.Tests.csproj", "{CA32E95A-1164-42A8-AEC1-0B040E17B3AA}"
+EndProject
+Global
+ GlobalSection(SolutionConfigurationPlatforms) = preSolution
+  Debug|Any CPU = Debug|Any CPU
+  Release|Any CPU = Release|Any CPU
+ EndGlobalSection
+ GlobalSection(ProjectConfigurationPlatforms) = postSolution
+  {3C2A4BB4-8D9E-4ED3-96EE-E83EA0DF1181}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+  {3C2A4BB4-8D9E-4ED3-96EE-E83EA0DF1181}.Debug|Any CPU.Build.0 = Release|Any CPU
+  {3C2A4BB4-8D9E-4ED3-96EE-E83EA0DF1181}.Release|Any CPU.ActiveCfg = Release|Any CPU
+  {3C2A4BB4-8D9E-4ED3-96EE-E83EA0DF1181}.Release|Any CPU.Build.0 = Release|Any CPU
+  {A3C629E5-F18E-4D74-8DAB-4B3B8B46C275}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+  {A3C629E5-F18E-4D74-8DAB-4B3B8B46C275}.Debug|Any CPU.Build.0 = Release|Any CPU
+  {A3C629E5-F18E-4D74-8DAB-4B3B8B46C275}.Release|Any CPU.ActiveCfg = Release|Any CPU
+  {A3C629E5-F18E-4D74-8DAB-4B3B8B46C275}.Release|Any CPU.Build.0 = Release|Any CPU
+ EndGlobalSection
+EndGlobal
