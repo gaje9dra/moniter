@@ -5,7 +5,6 @@ using Moniter.Api.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole();
-builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
@@ -47,7 +46,17 @@ app.Use(async (context, next) =>
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapGet("/openapi", () => Results.Ok(new
+    {
+        openapi = "3.0.3",
+        info = new { title = "Moniter API", version = "v1" },
+        paths = new Dictionary<string, object>
+        {
+            ["/"] = new { get = new { summary = "Service information" } },
+            ["/health/live"] = new { get = new { summary = "Liveness health check" } },
+            ["/health/ready"] = new { get = new { summary = "Readiness health check" } }
+        }
+    })).WithName("DevelopmentOpenApi").WithTags("Foundation");
 }
 
 app.MapGet("/", () => Results.Ok(new
