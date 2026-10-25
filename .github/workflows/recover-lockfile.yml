@@ -41,7 +41,7 @@ jobs:
           test "$(wc -c < artifact/pnpm-lock.yaml | tr -d ' ')" = "140815"
           printf '%s  %s\n' '64a4c74ced662cdef6a412c9c381f71bdd63f6445453a675c7ed7bf9aafdc5d6' 'artifact/pnpm-lock.yaml' | sha256sum --check
           grep -Fq "lockfileVersion: '9.0'" artifact/pnpm-lock.yaml
-          grep -Fq '^importers:' artifact/pnpm-lock.yaml
+          grep -q '^importers:' artifact/pnpm-lock.yaml
 
       - name: Check expected target branch head and commit lockfile
         shell: bash
